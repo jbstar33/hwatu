@@ -1,0 +1,98 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>HTML5 맞고</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <main class="game-wrap">
+      <header class="top-bar">
+        <h1>맞고: 사람 vs AI</h1>
+        <div class="top-controls">
+          <button id="newGameBtn">새 게임</button>
+          <button id="voiceToggleBtn">음성: 켜짐</button>
+          <button id="rulesBtn">규칙 보기</button>
+        </div>
+      </header>
+
+      <section class="layout">
+        <section class="board-area">
+          <section class="player-lane ai-lane">
+            <div id="aiHand" class="hand hand-hidden"></div>
+          </section>
+
+          <section class="table-stage">
+            <div class="deck-box">
+              <h3>더미</h3>
+              <div id="deckCount" class="deck-count"></div>
+              <h3 class="mini-title">뻑 더미</h3>
+              <div id="ppukPiles" class="ppuk-piles"></div>
+            </div>
+            <div class="table-zone">
+              <h3>바닥 패</h3>
+              <div id="tableCards" class="table-cards"></div>
+            </div>
+          </section>
+
+          <section class="player-lane human-lane">
+            <div id="humanHand" class="hand"></div>
+          </section>
+
+          <section class="action-row">
+            <button id="goBtn" disabled>고</button>
+            <button id="stopBtn" disabled>스톱</button>
+          </section>
+          <div id="turnCountdown" class="turn-countdown hidden" aria-live="polite"></div>
+          <div id="goStopModal" class="go-stop-modal hidden" role="dialog" aria-modal="true">
+            <div class="go-stop-card">
+              <h3 id="goStopTitle">고/스톱 선택</h3>
+              <p id="goStopScore"></p>
+              <p id="goStopDetail"></p>
+              <div class="go-stop-actions">
+                <button id="goDecisionBtn">고</button>
+                <button id="stopDecisionBtn">스톱</button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <aside class="side-panel">
+          <section class="status-panel">
+            <p id="statusText">게임 준비 중...</p>
+            <p id="turnText"></p>
+          </section>
+
+          <section class="capture-box player-info-box">
+            <h3>AI 정보</h3>
+            <p id="aiHandCount"></p>
+            <p id="aiScore"></p>
+            <p id="aiGo"></p>
+            <p class="mini-title">최근 낸 패</p>
+            <div id="aiLastPlay" class="last-play"></div>
+            <p class="mini-title">먹은 패</p>
+            <div id="aiCapturedCards" class="captured-cards"></div>
+          </section>
+
+          <section class="capture-box player-info-box">
+            <h3>내 정보</h3>
+            <p id="humanScore"></p>
+            <p id="humanGo"></p>
+            <p class="mini-title">최근 낸 패</p>
+            <div id="humanLastPlay" class="last-play"></div>
+            <p class="mini-title">먹은 패</p>
+            <div id="humanCapturedCards" class="captured-cards"></div>
+          </section>
+
+          <section class="log-section">
+            <h3>진행 로그</h3>
+            <ul id="logList"></ul>
+          </section>
+        </aside>
+      </section>
+    </main>
+
+    <script src="game.js"></script>
+  </body>
+</html>

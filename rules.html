@@ -1,0 +1,72 @@
+<!doctype html>
+<html lang="ko">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>맞고 규칙 안내</title>
+    <style>
+      body { margin: 0; font-family: "Noto Sans KR", sans-serif; background:#102b1f; color:#f4f1e8; }
+      main { max-width: 860px; margin: 0 auto; padding: 20px; line-height: 1.62; }
+      h1,h2 { margin: 0 0 10px; }
+      section { background: rgba(255,255,255,0.08); border:1px solid rgba(255,255,255,0.2); border-radius: 10px; padding: 14px; margin-bottom: 12px; }
+      ul { margin: 6px 0 0; padding-left: 18px; }
+      li { margin-bottom: 4px; }
+      .note { opacity: .9; font-size: 0.95rem; }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>맞고 규칙 안내</h1>
+
+      <section>
+        <h2>1) 기본 흐름</h2>
+        <ul>
+          <li>처음에 각자 손패 10장, 바닥 8장을 깔고 시작합니다.</li>
+          <li>내 패를 1장 내고, 더미를 1장 뒤집어 같은 월(무늬)을 맞춰 먹습니다.</li>
+          <li>바닥에 같은 월이 2장 있을 때 고르는 상황이면 직접 선택합니다.</li>
+          <li>단, 그 2장이 모두 피면 자동으로 하나를 골라 진행합니다.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>2) 점수와 승부</h2>
+        <ul>
+          <li>점수는 광/열끗/띠/피 기준으로 계산합니다.</li>
+          <li>기본 점수가 7점 이상이면 고/스톱을 선택할 수 있습니다.</li>
+          <li>3고부터는 고 횟수 배수(3고 2배, 4고 4배, 5고 8배...)를 적용합니다.</li>
+          <li>흔들기, 피박/광박은 스톱 정산 점수에 반영됩니다.</li>
+          <li>더미가 끝났는데 둘 다 7점 미만이면 나가리로 끝납니다.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>3) 보너스피</h2>
+        <ul>
+          <li>초기 바닥에 보너스피가 있으면 선이 가져가고, 더미에서 바닥을 보충합니다.</li>
+          <li>손에 있는 보너스피를 쓰면 손패를 1장 보충합니다.</li>
+          <li>더미에서 보너스피가 나오면 바로 가져가고, 한 장 더 뒤집습니다.</li>
+          <li>보너스피를 사용해 확정되면 상대 피 1장을 가져옵니다.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>4) 뻑</h2>
+        <ul>
+          <li>손패로 먼저 먹었는데, 더미에서 같은 월이 나오면 뻑입니다.</li>
+          <li>해당 3장(상황에 따라 보너스피 포함)을 뻑 더미로 모아 둡니다.</li>
+          <li>다음에 같은 월이 다시 나오면 뻑 더미를 가져가고, 상대 피 1장을 받습니다.</li>
+        </ul>
+      </section>
+
+      <section>
+        <h2>5) 9월 열끗이</h2>
+        <ul>
+          <li>기본은 열끗으로 계산합니다.</li>
+          <li>고/스톱을 결정하기 직전에 피로 바꿔서 유리해질 수 있으면 선택창이 뜹니다.</li>
+          <li>상대가 피박을 피할 수 있는 상황이면 자동으로 피 처리 우선 계산을 적용합니다.</li>
+        </ul>
+        <p class="note">안내: 특수 룰(쪽, 따닥, 폭탄, 총통 등)은 순차적으로 확장 중입니다.</p>
+      </section>
+    </main>
+  </body>
+</html>
