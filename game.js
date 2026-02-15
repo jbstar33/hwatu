@@ -98,8 +98,6 @@ const el = {
   mobileAiCapturedCards: document.getElementById("mobileAiCapturedCards"),
   mobileHumanCapturedCards: document.getElementById("mobileHumanCapturedCards"),
   logList: document.getElementById("logList"),
-  goBtn: document.getElementById("goBtn"),
-  stopBtn: document.getElementById("stopBtn"),
   rulesBtn: document.getElementById("rulesBtn"),
   goDecisionBtn: document.getElementById("goDecisionBtn"),
   stopDecisionBtn: document.getElementById("stopDecisionBtn"),
@@ -112,8 +110,6 @@ el.voiceToggleBtn.addEventListener("click", () => {
   game.voiceEnabled = !game.voiceEnabled;
   el.voiceToggleBtn.textContent = `음성: ${game.voiceEnabled ? "켜짐" : "꺼짐"}`;
 });
-el.goBtn.addEventListener("click", () => handleGoStop(true));
-el.stopBtn.addEventListener("click", () => handleGoStop(false));
 el.rulesBtn?.addEventListener("click", () => window.open("rules.html", "_blank", "noopener"));
 el.goDecisionBtn?.addEventListener("click", () => handleGoStop(true));
 el.stopDecisionBtn?.addEventListener("click", () => handleGoStop(false));
@@ -611,8 +607,6 @@ function afterTurnScoring(current, opponent) {
       game.awaitingGoStop = true;
       clearReminder();
       el.statusText.textContent = `점수 ${current.score}점. 고/스톱을 선택하세요.`;
-      el.goBtn.disabled = false;
-      el.stopBtn.disabled = false;
       render();
     }
   }
@@ -637,8 +631,6 @@ function handleGoStop(isGo) {
 function currentGoStop(isGo) {
   const player = game.players[game.turn];
   game.awaitingGoStop = false;
-  el.goBtn.disabled = true;
-  el.stopBtn.disabled = true;
 
   if (isGo) {
     player.goCount += 1;
@@ -666,8 +658,6 @@ function endByDeck() {
   if (p0Final < WIN_THRESHOLD && p1Final < WIN_THRESHOLD) {
     game.gameOver = true;
     clearReminder();
-    el.goBtn.disabled = true;
-    el.stopBtn.disabled = true;
     el.statusText.textContent = "나가리: 양쪽 모두 7점 미만";
     logLine("나가리 (다음 판 판돈 2배, 최대 8배 규칙 대상)");
     render();
@@ -689,8 +679,6 @@ function endByDeck() {
 function endGame(winner, reason = "", finalScoreOverride = null) {
   game.gameOver = true;
   clearReminder();
-  el.goBtn.disabled = true;
-  el.stopBtn.disabled = true;
 
   const loser = game.players.find((p) => p.id !== winner.id);
   const finalScore = finalScoreOverride ?? winner.score;

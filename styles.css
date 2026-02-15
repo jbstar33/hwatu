@@ -9,6 +9,8 @@
   --card-w: 64px;
   --card-h: 96px;
   --card-gap: 6px;
+  --font-ui-desktop: "Noto Serif KR", "Apple SD Gothic Neo", serif;
+  --font-ui-mobile: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Apple SD Gothic Neo", "Noto Sans KR", "Roboto", "Segoe UI", "Noto Sans", "Helvetica Neue", Arial, sans-serif;
 }
 
 * {
@@ -24,7 +26,7 @@ body {
 body {
   margin: 0;
   color: var(--ink);
-  font-family: "Noto Serif KR", "Apple SD Gothic Neo", serif;
+  font-family: var(--font-ui-desktop);
   background:
     radial-gradient(circle at 18% 10%, rgba(255, 255, 255, 0.18), transparent 30%),
     radial-gradient(circle at 80% 20%, rgba(255, 255, 255, 0.08), transparent 32%),
@@ -345,11 +347,6 @@ button:disabled {
   transform: translateX(-50%) translateY(0);
 }
 
-.action-row {
-  display: none;
-  justify-content: center;
-}
-
 .turn-countdown {
   position: absolute;
   left: 50%;
@@ -575,7 +572,17 @@ button:disabled {
   margin-bottom: 3px;
 }
 
+@media (min-width: 761px) {
+  .side-panel .status-panel {
+    order: 99;
+  }
+}
+
 @media (max-width: 1050px) {
+  body {
+    font-family: var(--font-ui-mobile);
+  }
+
   :root {
     --card-w: 56px;
     --card-h: 84px;
