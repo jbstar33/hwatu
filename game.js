@@ -228,18 +228,19 @@ function makeDeck() {
   push(10, "junk", { slot: 3 });
 
   push(11, "gwang", { slot: 0, rain: true });
-  // 11월(오동): 광 + 쌍피 + 피 + 피
-  push(11, "junk", { slot: 1, junkValue: 1 });
-  push(11, "junk", { slot: 2, junkValue: 2 });
+  // 11월(오동): 광 + 쌍피(m11_1) + 피 + 피
+  push(11, "junk", { slot: 1, junkValue: 2 });
+  push(11, "junk", { slot: 2, junkValue: 1 });
   push(11, "junk", { slot: 3, junkValue: 1 });
 
-  // 12월(비): 광 + 쌍피 + 피 + 피
+  // 12월(비): 광 + 피 + 피 + 쌍피(m12_3)
   push(12, "gwang", { slot: 0 });
-  push(12, "junk", { slot: 1, junkValue: 2 });
+  push(12, "junk", { slot: 1, junkValue: 1 });
   push(12, "junk", { slot: 2, junkValue: 1 });
-  push(12, "junk", { slot: 3, junkValue: 1 });
-  push(13, "bonus", { slot: 0, spriteCol: 0, spriteRow: 0, asset: "assets/hwatu/bonus_1.png" });
-  push(14, "bonus", { slot: 0, spriteCol: 0, spriteRow: 0, asset: "assets/hwatu/bonus_2.png" });
+  push(12, "junk", { slot: 3, junkValue: 2 });
+  // 보너스 패 2장은 쌍피(피 2장) 취급
+  push(13, "bonus", { slot: 0, spriteCol: 0, spriteRow: 0, junkValue: 2, asset: "assets/hwatu/bonus_1.png" });
+  push(14, "bonus", { slot: 0, spriteCol: 0, spriteRow: 0, junkValue: 2, asset: "assets/hwatu/bonus_2.png" });
 
   return deck;
 }
@@ -808,7 +809,9 @@ function scoreDetailWithOption(cards, nineAnimalAsJunk = false) {
   const junkFromCards = cards
     .filter((c) => c.type === "junk")
     .reduce((acc, c) => acc + (c.junkValue || 1), 0);
-  const junkFromBonus = cards.filter((c) => c.type === "bonus").length;
+  const junkFromBonus = cards
+    .filter((c) => c.type === "bonus")
+    .reduce((acc, c) => acc + (c.junkValue || 2), 0);
   // 9월 열끗을 피로 보낼 때는 쌍피(2장)로 계산
   const nineAsJunkValue = nineAsJunk * 2;
   const junk = junkFromCards + junkFromBonus + nineAsJunkValue;
