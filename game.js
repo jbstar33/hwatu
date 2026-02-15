@@ -472,7 +472,12 @@ function resolvePlacement(player, card, chosenTableId, fromDeck) {
     return { bonusUsed: true, captured: [] };
   }
 
-  claimPpukPileByMonth(player, card.month);
+  const claimedPpukCards = claimPpukPileByMonth(player, card.month);
+  if (claimedPpukCards.length) {
+    takeCards(player, [card]);
+    logLine(`${player.name}: 뻑 회수와 함께 ${describeCard(card)} 획득`);
+    return { captured: [card, ...claimedPpukCards], laidToTable: false };
+  }
 
   const matches = game.table.filter((t) => t.month === card.month);
 
@@ -1277,16 +1282,19 @@ function markPpukIfNeeded(player, playedCard, handResult, deckOutcome) {
 
 function claimPpukPileByMonth(player, month) {
   const matched = game.ppukPiles.filter((p) => p.month === month);
-  if (!matched.length) return;
+  if (!matched.length) return [];
   const opponent = game.players.find((p) => p.id !== player.id);
+  const collected = [];
 
   matched.forEach((pile) => {
+    collected.push(...pile.cards);
     takeCards(player, pile.cards);
     stealJunkFromOpponent(player, 1, opponent);
     logLine(`${player.name}: 뻑 더미 회수 + 상대 피 1장`);
   });
   game.ppukPiles = game.ppukPiles.filter((p) => p.month !== month);
   speak("앗싸~ 피 한장 내놔");
+  return collected;
 }
 
 function finalizeBonusAfterTurn(player, opponent) {
