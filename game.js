@@ -228,14 +228,16 @@ function makeDeck() {
   push(10, "junk", { slot: 3 });
 
   push(11, "gwang", { slot: 0, rain: true });
-  push(11, "ribbon", { slot: 1, ribbonKind: "plain" });
-  push(11, "animal", { slot: 2 });
-  push(11, "junk", { slot: 3 });
+  // 11월(오동): 광 + 쌍피 + 피 + 피
+  push(11, "junk", { slot: 1, junkValue: 1 });
+  push(11, "junk", { slot: 2, junkValue: 2 });
+  push(11, "junk", { slot: 3, junkValue: 1 });
 
+  // 12월(비): 광 + 쌍피 + 피 + 피
   push(12, "gwang", { slot: 0 });
-  push(12, "junk", { slot: 1 });
-  push(12, "animal", { slot: 2 });
-  push(12, "junk", { slot: 3 });
+  push(12, "junk", { slot: 1, junkValue: 2 });
+  push(12, "junk", { slot: 2, junkValue: 1 });
+  push(12, "junk", { slot: 3, junkValue: 1 });
   push(13, "bonus", { slot: 0, spriteCol: 0, spriteRow: 0, asset: "assets/hwatu/bonus_1.png" });
   push(14, "bonus", { slot: 0, spriteCol: 0, spriteRow: 0, asset: "assets/hwatu/bonus_2.png" });
 
@@ -803,7 +805,13 @@ function scoreDetailWithOption(cards, nineAnimalAsJunk = false) {
   const animals = animalCards.length;
   const ribbons = ribbonCards.length;
   const nineAsJunk = cards.filter((c) => c.type === "animal" && c.month === 9 && nineAnimalAsJunk).length;
-  const junk = cards.filter((c) => c.type === "junk" || c.type === "bonus").length + nineAsJunk;
+  const junkFromCards = cards
+    .filter((c) => c.type === "junk")
+    .reduce((acc, c) => acc + (c.junkValue || 1), 0);
+  const junkFromBonus = cards.filter((c) => c.type === "bonus").length;
+  // 9월 열끗을 피로 보낼 때는 쌍피(2장)로 계산
+  const nineAsJunkValue = nineAsJunk * 2;
+  const junk = junkFromCards + junkFromBonus + nineAsJunkValue;
 
   const rainCount = gwangCards.filter((c) => c.rain).length;
   const pureGwang = gwangCards.length - rainCount;
@@ -974,6 +982,7 @@ function buildCardNode(card) {
   const node = document.createElement("div");
   node.className = "card";
   node.dataset.id = card.id;
+  const badgeLabel = card.type === "junk" && (card.junkValue || 1) >= 2 ? "쌍피" : TYPE_LABEL[card.type];
 
   if (card.type === "bonus") {
     node.classList.add("bonus-card");
@@ -981,7 +990,7 @@ function buildCardNode(card) {
     node.innerHTML = `
       <div class="card-img" style="${bonusAsset ? `background-image:url('${bonusAsset}'); background-size:cover; background-position:center;` : ""}"></div>
       <div class="card-month">보너스</div>
-      <div class="card-badge">${TYPE_LABEL[card.type]}</div>
+      <div class="card-badge">${badgeLabel}</div>
     `;
     return node;
   }
@@ -995,7 +1004,7 @@ function buildCardNode(card) {
   node.innerHTML = `
     <div class="card-img" style="${cardAsset ? `background-image:url('${cardAsset}'); background-size:cover; background-position:center;` : `background-position:${xPos} ${yPos}` }"></div>
     <div class="card-month">${card.month}월</div>
-    <div class="card-badge">${TYPE_LABEL[card.type]}</div>
+    <div class="card-badge">${badgeLabel}</div>
   `;
 
   return node;
@@ -1274,6 +1283,7 @@ function wait(ms) {
 
 function describeCard(card) {
   if (card.type === "bonus") return "보너스피";
+  if (card.type === "junk" && (card.junkValue || 1) >= 2) return `${card.month}월 쌍피`;
   return `${card.month}월 ${TYPE_LABEL[card.type]}`;
 }
 
