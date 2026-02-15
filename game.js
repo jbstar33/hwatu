@@ -23,6 +23,10 @@ const TYPE_LABEL = {
 
 const TYPE_ORDER = { gwang: 0, animal: 1, ribbon: 2, junk: 3, bonus: 4 };
 const RIBBON_KIND_ORDER = { cheong: 0, hong: 1, plain: 2 };
+const HONGDAN_MONTHS = [1, 2, 3];
+const CHEONGDAN_MONTHS = [6, 9, 10];
+const CHODAN_MONTHS = [4, 5, 7];
+const GODORI_MONTHS = [2, 4, 8];
 const WIN_THRESHOLD = 7;
 const ANIM = {
   aiThinkMs: 950,
@@ -709,9 +713,13 @@ function calculateStopSettlement(player, detail, opponent = null) {
       total *= 2;
       mods.push("피박 x2");
     }
-    if (detail.gwang >= 3 && opDetail.gwang === 0) {
+    if (detail.gwangPoint > 0 && detail.gwang >= 3 && opDetail.gwang === 0) {
       total *= 2;
       mods.push("광박 x2");
+    }
+    if (detail.animals >= 7) {
+      total *= 2;
+      mods.push("멍박 x2");
     }
   }
 
@@ -745,10 +753,12 @@ function scoreDetail(cards) {
 
 function scoreDetailWithOption(cards, nineAnimalAsJunk = false) {
   const gwangCards = cards.filter((c) => c.type === "gwang");
-  const animals = cards.filter(
+  const animalCards = cards.filter(
     (c) => c.type === "animal" && !(nineAnimalAsJunk && c.month === 9)
-  ).length;
-  const ribbons = cards.filter((c) => c.type === "ribbon").length;
+  );
+  const ribbonCards = cards.filter((c) => c.type === "ribbon");
+  const animals = animalCards.length;
+  const ribbons = ribbonCards.length;
   const nineAsJunk = cards.filter((c) => c.type === "animal" && c.month === 9 && nineAnimalAsJunk).length;
   const junk = cards.filter((c) => c.type === "junk" || c.type === "bonus").length + nineAsJunk;
 
@@ -760,8 +770,19 @@ function scoreDetailWithOption(cards, nineAnimalAsJunk = false) {
   else if (gwangCards.length === 4) gwangPoint = 4;
   else if (gwangCards.length === 3) gwangPoint = rainCount > 0 ? 2 : 3;
 
-  const animalPoint = animals >= 5 ? animals - 4 : 0;
-  const ribbonPoint = ribbons >= 5 ? ribbons - 4 : 0;
+  const ribbonMonths = new Set(ribbonCards.map((c) => c.month));
+  const animalMonths = new Set(animalCards.map((c) => c.month));
+
+  const hasHongdan = HONGDAN_MONTHS.every((m) => ribbonMonths.has(m));
+  const hasCheongdan = CHEONGDAN_MONTHS.every((m) => ribbonMonths.has(m));
+  const hasChodan = CHODAN_MONTHS.every((m) => ribbonMonths.has(m));
+  const hasGodori = GODORI_MONTHS.every((m) => animalMonths.has(m));
+
+  const ribbonYakPoint = (hasHongdan ? 3 : 0) + (hasCheongdan ? 3 : 0) + (hasChodan ? 3 : 0);
+  const animalYakPoint = hasGodori ? 5 : 0;
+
+  const animalPoint = (animals >= 5 ? animals - 4 : 0) + animalYakPoint;
+  const ribbonPoint = (ribbons >= 5 ? ribbons - 4 : 0) + ribbonYakPoint;
   const junkPoint = junk >= 10 ? junk - 9 : 0;
 
   return {
@@ -772,8 +793,14 @@ function scoreDetailWithOption(cards, nineAnimalAsJunk = false) {
     junk,
     gwangPoint,
     animalPoint,
+    animalYakPoint,
     ribbonPoint,
+    ribbonYakPoint,
     junkPoint,
+    hasHongdan,
+    hasCheongdan,
+    hasChodan,
+    hasGodori,
     base: gwangPoint + animalPoint + ribbonPoint + junkPoint
   };
 }
@@ -1206,7 +1233,13 @@ function describeCard(card) {
 function formatScoreLine(player) {
   const d = player.scoreDetail || {};
   const nineTag = player.nineAnimalAsJunk ? "9열끗:피" : "9열끗:열끗";
-  return `점수 ${player.score} (스톱정산 ${player.stopScore || 0}) (광 ${d.gwang || 0}/${d.gwangPoint || 0}점, 열끗 ${d.animals || 0}/${d.animalPoint || 0}점, 띠 ${d.ribbons || 0}/${d.ribbonPoint || 0}점, 피 ${d.junk || 0}/${d.junkPoint || 0}점, ${nineTag})`;
+  const yaks = [];
+  if (d.hasGodori) yaks.push("고도리");
+  if (d.hasHongdan) yaks.push("홍단");
+  if (d.hasCheongdan) yaks.push("청단");
+  if (d.hasChodan) yaks.push("초단");
+  const yakText = yaks.length ? `, 약 ${yaks.join("/")}` : "";
+  return `점수 ${player.score} (스톱정산 ${player.stopScore || 0}) (광 ${d.gwang || 0}/${d.gwangPoint || 0}점, 열끗 ${d.animals || 0}/${d.animalPoint || 0}점, 띠 ${d.ribbons || 0}/${d.ribbonPoint || 0}점, 피 ${d.junk || 0}/${d.junkPoint || 0}점${yakText}, ${nineTag})`;
 }
 
 function maybeAskNineAnimalChoice(player, opponent) {
@@ -1321,8 +1354,14 @@ function renderGoStopModal(me) {
 
   el.goStopTitle.textContent = "고 / 스톱 결정";
   el.goStopScore.textContent = `현재 진행 점수 ${me.score}점 | 스톱 시 최종 ${me.stopScore || 0}점`;
+  const yaks = [];
+  if (d.hasGodori) yaks.push("고도리");
+  if (d.hasHongdan) yaks.push("홍단");
+  if (d.hasCheongdan) yaks.push("청단");
+  if (d.hasChodan) yaks.push("초단");
   el.goStopDetail.textContent =
     `광 ${d.gwang || 0}/${d.gwangPoint || 0}점, 열끗 ${d.animals || 0}/${d.animalPoint || 0}점, 띠 ${d.ribbons || 0}/${d.ribbonPoint || 0}점, 피 ${d.junk || 0}/${d.junkPoint || 0}점` +
+    (yaks.length ? `, 약 ${yaks.join("/")}` : "") +
     (mods.length ? ` | 배수: ${mods.join(", ")}` : "");
 }
 
