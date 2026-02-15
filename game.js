@@ -233,10 +233,10 @@ function makeDeck() {
   push(11, "junk", { slot: 2, junkValue: 1 });
   push(11, "junk", { slot: 3, junkValue: 1 });
 
-  // 12월(비): 광 + 피 + 피 + 쌍피(m12_3)
+  // 12월(비): 광 + 열끗(m12_1) + 띠(m12_2) + 쌍피(m12_3)
   push(12, "gwang", { slot: 0 });
-  push(12, "junk", { slot: 1, junkValue: 1 });
-  push(12, "junk", { slot: 2, junkValue: 1 });
+  push(12, "animal", { slot: 1 });
+  push(12, "ribbon", { slot: 2, ribbonKind: "plain" });
   push(12, "junk", { slot: 3, junkValue: 2 });
   // 보너스 패 2장은 쌍피(피 2장) 취급
   push(13, "bonus", { slot: 0, spriteCol: 0, spriteRow: 0, junkValue: 2, asset: "assets/hwatu/bonus_1.png" });
