@@ -76,6 +76,11 @@ const el = {
   ppukPiles: document.getElementById("ppukPiles"),
   turnCountdown: document.getElementById("turnCountdown"),
   goStopModal: document.getElementById("goStopModal"),
+  resultModal: document.getElementById("resultModal"),
+  resultConfetti: document.getElementById("resultConfetti"),
+  resultTitle: document.getElementById("resultTitle"),
+  resultWinner: document.getElementById("resultWinner"),
+  resultFinalScore: document.getElementById("resultFinalScore"),
   goStopTitle: document.getElementById("goStopTitle"),
   goStopScore: document.getElementById("goStopScore"),
   goStopDetail: document.getElementById("goStopDetail"),
@@ -110,6 +115,7 @@ window.speechSynthesis?.addEventListener("voiceschanged", () => {
 
 function startGame() {
   clearReminder();
+  hideResultOverlay();
   game.players = [makePlayer("human", "나", false), makePlayer("ai", "AI", true)];
   game.table = [];
   game.deck = shuffle(makeDeck());
@@ -664,11 +670,48 @@ function endGame(winner, reason = "", finalScoreOverride = null) {
   const loser = game.players.find((p) => p.id !== winner.id);
   const finalScore = finalScoreOverride ?? winner.score;
   el.statusText.textContent = `${winner.name} 승리! 최종 ${finalScore}점`;
+  showResultOverlay(winner, finalScore);
   if (reason) {
     logLine(reason);
   }
   logLine(`${winner.name} 승리 (${finalScore}점 vs ${loser.score}점)`);
   render();
+}
+
+function showResultOverlay(winner, finalScore) {
+  if (!el.resultModal) return;
+  el.resultTitle.textContent = "게임 종료";
+  el.resultWinner.textContent = `${winner.name} 승리`;
+  el.resultFinalScore.textContent = `최종 정산 점수: ${finalScore}점`;
+  el.resultModal.classList.remove("hidden");
+  if (winner.id === "human") {
+    spawnConfetti(42);
+  }
+}
+
+function hideResultOverlay() {
+  if (!el.resultModal) return;
+  el.resultModal.classList.add("hidden");
+  if (el.resultConfetti) el.resultConfetti.innerHTML = "";
+}
+
+function spawnConfetti(count = 36) {
+  if (!el.resultConfetti) return;
+  el.resultConfetti.innerHTML = "";
+  const colors = ["#ffd867", "#ff7f7f", "#8fe6a2", "#79beff", "#f7c0ff", "#fff0a8"];
+  for (let i = 0; i < count; i += 1) {
+    const piece = document.createElement("span");
+    piece.className = "result-confetti-piece";
+    piece.style.left = `${Math.random() * 100}%`;
+    piece.style.background = colors[i % colors.length];
+    piece.style.animationDelay = `${Math.random() * 420}ms`;
+    piece.style.animationDuration = `${1300 + Math.floor(Math.random() * 900)}ms`;
+    piece.style.transform = `rotate(${Math.floor(Math.random() * 360)}deg)`;
+    el.resultConfetti.appendChild(piece);
+  }
+  setTimeout(() => {
+    if (el.resultConfetti) el.resultConfetti.innerHTML = "";
+  }, 2600);
 }
 
 function nextTurn() {
