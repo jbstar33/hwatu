@@ -19,7 +19,7 @@
 
       <section class="layout">
         <section class="board-area">
-          <section class="player-lane ai-lane">
+          <section id="aiLane" class="player-lane ai-lane">
             <div id="aiHand" class="hand hand-hidden"></div>
           </section>
 
@@ -36,7 +36,7 @@
             </div>
           </section>
 
-          <section class="player-lane human-lane">
+          <section id="humanLane" class="player-lane human-lane">
             <div id="humanHand" class="hand"></div>
           </section>
 
@@ -72,23 +72,46 @@
             <p id="turnText"></p>
           </section>
 
-          <section class="capture-box player-info-box">
+          <section class="capture-box player-info-box mobile-only">
+            <h3>AI 먹는 패</h3>
+            <div id="mobileAiCapturedCards" class="captured-cards"></div>
+          </section>
+
+          <section class="capture-box player-info-box mobile-only">
+            <h3>내가 먹는 패</h3>
+            <div id="mobileHumanCapturedCards" class="captured-cards"></div>
+          </section>
+
+          <section class="capture-box player-info-box mobile-only">
+            <h3>AI 점수</h3>
+            <p id="mobileAiHandCount"></p>
+            <p id="mobileAiScore"></p>
+            <p id="mobileAiGo"></p>
+          </section>
+
+          <section class="capture-box player-info-box mobile-only">
+            <h3>내 점수</h3>
+            <p id="mobileHumanScore"></p>
+            <p id="mobileHumanGo"></p>
+          </section>
+
+          <section class="capture-box player-info-box desktop-only">
             <h3>AI 정보</h3>
             <p id="aiHandCount"></p>
             <p id="aiScore"></p>
             <p id="aiGo"></p>
-            <p class="mini-title">최근 낸 패</p>
-            <div id="aiLastPlay" class="last-play"></div>
+            <p class="mini-title recent-title">최근 낸 패</p>
+            <div id="aiLastPlay" class="last-play recent-play"></div>
             <p class="mini-title">먹은 패</p>
             <div id="aiCapturedCards" class="captured-cards"></div>
           </section>
 
-          <section class="capture-box player-info-box">
+          <section class="capture-box player-info-box desktop-only">
             <h3>내 정보</h3>
             <p id="humanScore"></p>
             <p id="humanGo"></p>
-            <p class="mini-title">최근 낸 패</p>
-            <div id="humanLastPlay" class="last-play"></div>
+            <p class="mini-title recent-title">최근 낸 패</p>
+            <div id="humanLastPlay" class="last-play recent-play"></div>
             <p class="mini-title">먹은 패</p>
             <div id="humanCapturedCards" class="captured-cards"></div>
           </section>

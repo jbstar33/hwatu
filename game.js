@@ -64,11 +64,18 @@ const game = {
 const el = {
   statusText: document.getElementById("statusText"),
   turnText: document.getElementById("turnText"),
+  aiLane: document.getElementById("aiLane"),
+  humanLane: document.getElementById("humanLane"),
   aiHandCount: document.getElementById("aiHandCount"),
   aiScore: document.getElementById("aiScore"),
   aiGo: document.getElementById("aiGo"),
+  mobileAiHandCount: document.getElementById("mobileAiHandCount"),
+  mobileAiScore: document.getElementById("mobileAiScore"),
+  mobileAiGo: document.getElementById("mobileAiGo"),
   humanScore: document.getElementById("humanScore"),
   humanGo: document.getElementById("humanGo"),
+  mobileHumanScore: document.getElementById("mobileHumanScore"),
+  mobileHumanGo: document.getElementById("mobileHumanGo"),
   aiHand: document.getElementById("aiHand"),
   humanHand: document.getElementById("humanHand"),
   tableCards: document.getElementById("tableCards"),
@@ -88,6 +95,8 @@ const el = {
   humanLastPlay: document.getElementById("humanLastPlay"),
   aiCapturedCards: document.getElementById("aiCapturedCards"),
   humanCapturedCards: document.getElementById("humanCapturedCards"),
+  mobileAiCapturedCards: document.getElementById("mobileAiCapturedCards"),
+  mobileHumanCapturedCards: document.getElementById("mobileHumanCapturedCards"),
   logList: document.getElementById("logList"),
   goBtn: document.getElementById("goBtn"),
   stopBtn: document.getElementById("stopBtn"),
@@ -917,6 +926,12 @@ function render() {
   el.humanScore.textContent = formatScoreLine(me);
   el.humanGo.textContent = `고 ${me.goCount}회 | 흔들기 x${me.shakeMultiplier}`;
 
+  if (el.mobileAiHandCount) el.mobileAiHandCount.textContent = `손패 ${ai.hand.length}장`;
+  if (el.mobileAiScore) el.mobileAiScore.textContent = formatScoreLine(ai);
+  if (el.mobileAiGo) el.mobileAiGo.textContent = `고 ${ai.goCount}회 | 흔들기 x${ai.shakeMultiplier}`;
+  if (el.mobileHumanScore) el.mobileHumanScore.textContent = formatScoreLine(me);
+  if (el.mobileHumanGo) el.mobileHumanGo.textContent = `고 ${me.goCount}회 | 흔들기 x${me.shakeMultiplier}`;
+
   el.deckCount.textContent = `${game.deck.length}장`;
 
   renderAIHand(ai.hand.length);
@@ -926,8 +941,15 @@ function render() {
   renderLastPlay(el.humanLastPlay, game.lastPlay.human);
   renderCaptured(el.aiCapturedCards, ai);
   renderCaptured(el.humanCapturedCards, me);
+  if (el.mobileAiCapturedCards) renderCaptured(el.mobileAiCapturedCards, ai);
+  if (el.mobileHumanCapturedCards) renderCaptured(el.mobileHumanCapturedCards, me);
   renderPpukPiles();
   renderGoStopModal(me);
+
+  const humanTurnActive = !game.gameOver && game.turn === 0 && !game.isAnimating;
+  const aiTurnActive = !game.gameOver && game.turn === 1 && !game.isAnimating;
+  el.humanLane?.classList.toggle("turn-active", humanTurnActive);
+  el.aiLane?.classList.toggle("turn-active", aiTurnActive);
 }
 
 function renderAIHand(count) {
