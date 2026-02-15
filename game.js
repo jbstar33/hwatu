@@ -367,7 +367,13 @@ async function onHumanCardClick(cardId, sourceNode) {
   const card = me.hand.find((c) => c.id === cardId);
   if (!card) return;
 
-  await maybeHumanShake(me, card.month);
+  const shookOnly = await maybeHumanShake(me, card.month);
+  if (shookOnly) {
+    el.statusText.textContent = "흔들기 완료. 낼 패를 선택하세요.";
+    scheduleReminder();
+    render();
+    return;
+  }
   await animatePlayCard(card, sourceNode, false);
 
   logLine(`내가 ${describeCard(card)} 를 냈습니다.`);
@@ -412,8 +418,10 @@ async function maybeHumanShake(player, month) {
       await showShakeReveal(player, month);
       logLine(`내가 흔들기! 배수 x${player.shakeMultiplier}`);
       speak("흔들어");
+      return true;
     }
   }
+  return false;
 }
 
 async function onTableCardChoice(tableCardId) {
@@ -723,6 +731,9 @@ function nextTurn() {
 }
 
 function updatePlayerScore(player, opponent = null) {
+  if (player.isAI) {
+    autoChooseNineAnimalForAI(player, opponent);
+  }
   const detail = scoreDetailWithOption(player.captured, player.nineAnimalAsJunk);
   const rawScore = Math.max(0, Math.floor(detail.base));
   const settlement = calculateStopSettlement(player, detail, opponent);
@@ -730,6 +741,29 @@ function updatePlayerScore(player, opponent = null) {
   player.stopScore = settlement.stopScore;
   player.settlementMods = settlement.mods;
   player.scoreDetail = detail;
+}
+
+function autoChooseNineAnimalForAI(player, opponent = null) {
+  const hasNineAnimal = player.captured.some((c) => c.type === "animal" && c.month === 9);
+  if (!hasNineAnimal) return;
+
+  const asAnimalDetail = scoreDetailWithOption(player.captured, false);
+  const asJunkDetail = scoreDetailWithOption(player.captured, true);
+
+  const asAnimalSettlement = calculateStopSettlement(player, asAnimalDetail, opponent).stopScore;
+  const asJunkSettlement = calculateStopSettlement(player, asJunkDetail, opponent).stopScore;
+
+  if (asJunkSettlement > asAnimalSettlement) {
+    player.nineAnimalAsJunk = true;
+    return;
+  }
+  if (asAnimalSettlement > asJunkSettlement) {
+    player.nineAnimalAsJunk = false;
+    return;
+  }
+
+  // 동점이면 일반적으로 피(쌍피)로 운용
+  player.nineAnimalAsJunk = true;
 }
 
 function calculateStopSettlement(player, detail, opponent = null) {
