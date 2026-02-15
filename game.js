@@ -781,8 +781,10 @@ function scoreDetailWithOption(cards, nineAnimalAsJunk = false) {
   const ribbonYakPoint = (hasHongdan ? 3 : 0) + (hasCheongdan ? 3 : 0) + (hasChodan ? 3 : 0);
   const animalYakPoint = hasGodori ? 5 : 0;
 
-  const animalPoint = (animals >= 5 ? animals - 4 : 0) + animalYakPoint;
-  const ribbonPoint = (ribbons >= 5 ? ribbons - 4 : 0) + ribbonYakPoint;
+  const animalBasePoint = animals >= 5 ? animals - 4 : 0;
+  const ribbonBasePoint = ribbons >= 5 ? ribbons - 4 : 0;
+  const animalPoint = animalBasePoint + animalYakPoint;
+  const ribbonPoint = ribbonBasePoint + ribbonYakPoint;
   const junkPoint = junk >= 10 ? junk - 9 : 0;
 
   return {
@@ -792,8 +794,10 @@ function scoreDetailWithOption(cards, nineAnimalAsJunk = false) {
     ribbons,
     junk,
     gwangPoint,
+    animalBasePoint,
     animalPoint,
     animalYakPoint,
+    ribbonBasePoint,
     ribbonPoint,
     ribbonYakPoint,
     junkPoint,
@@ -1238,8 +1242,10 @@ function formatScoreLine(player) {
   if (d.hasHongdan) yaks.push("홍단");
   if (d.hasCheongdan) yaks.push("청단");
   if (d.hasChodan) yaks.push("초단");
-  const yakText = yaks.length ? `, 약 ${yaks.join("/")}` : "";
-  return `점수 ${player.score} (스톱정산 ${player.stopScore || 0}) (광 ${d.gwang || 0}/${d.gwangPoint || 0}점, 열끗 ${d.animals || 0}/${d.animalPoint || 0}점, 띠 ${d.ribbons || 0}/${d.ribbonPoint || 0}점, 피 ${d.junk || 0}/${d.junkPoint || 0}점${yakText}, ${nineTag})`;
+  const animalBreakdown = `${d.animalPoint || 0}점(기본 ${d.animalBasePoint || 0} + 약 ${d.animalYakPoint || 0})`;
+  const ribbonBreakdown = `${d.ribbonPoint || 0}점(기본 ${d.ribbonBasePoint || 0} + 약 ${d.ribbonYakPoint || 0})`;
+  const yakText = yaks.length ? `, 약: ${yaks.join("/")}` : "";
+  return `점수 ${player.score} (스톱정산 ${player.stopScore || 0}) (광 ${d.gwang || 0}/${d.gwangPoint || 0}점, 열끗 ${d.animals || 0}/${animalBreakdown}, 띠 ${d.ribbons || 0}/${ribbonBreakdown}, 피 ${d.junk || 0}/${d.junkPoint || 0}점${yakText}, ${nineTag})`;
 }
 
 function maybeAskNineAnimalChoice(player, opponent) {
@@ -1359,9 +1365,11 @@ function renderGoStopModal(me) {
   if (d.hasHongdan) yaks.push("홍단");
   if (d.hasCheongdan) yaks.push("청단");
   if (d.hasChodan) yaks.push("초단");
+  const animalBreakdown = `${d.animalPoint || 0}점(기본 ${d.animalBasePoint || 0} + 약 ${d.animalYakPoint || 0})`;
+  const ribbonBreakdown = `${d.ribbonPoint || 0}점(기본 ${d.ribbonBasePoint || 0} + 약 ${d.ribbonYakPoint || 0})`;
   el.goStopDetail.textContent =
-    `광 ${d.gwang || 0}/${d.gwangPoint || 0}점, 열끗 ${d.animals || 0}/${d.animalPoint || 0}점, 띠 ${d.ribbons || 0}/${d.ribbonPoint || 0}점, 피 ${d.junk || 0}/${d.junkPoint || 0}점` +
-    (yaks.length ? `, 약 ${yaks.join("/")}` : "") +
+    `광 ${d.gwang || 0}/${d.gwangPoint || 0}점, 열끗 ${d.animals || 0}/${animalBreakdown}, 띠 ${d.ribbons || 0}/${ribbonBreakdown}, 피 ${d.junk || 0}/${d.junkPoint || 0}점` +
+    (yaks.length ? `, 약: ${yaks.join("/")}` : "") +
     (mods.length ? ` | 배수: ${mods.join(", ")}` : "");
 }
 
