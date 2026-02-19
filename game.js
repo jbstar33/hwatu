@@ -50,6 +50,7 @@ const game = {
   pendingChoice: null,
   awaitingGoStop: false,
   voiceEnabled: true,
+  pigbakEnabled: true,
   reminderTimer: null,
   actionTimeoutTimer: null,
   countdownTimer: null,
@@ -102,13 +103,18 @@ const el = {
   goDecisionBtn: document.getElementById("goDecisionBtn"),
   stopDecisionBtn: document.getElementById("stopDecisionBtn"),
   newGameBtn: document.getElementById("newGameBtn"),
-  voiceToggleBtn: document.getElementById("voiceToggleBtn")
+  voiceToggleBtn: document.getElementById("voiceToggleBtn"),
+  pigbakToggleBtn: document.getElementById("pigbakToggleBtn")
 };
 
 el.newGameBtn.addEventListener("click", () => startGame());
 el.voiceToggleBtn.addEventListener("click", () => {
   game.voiceEnabled = !game.voiceEnabled;
   el.voiceToggleBtn.textContent = `음성: ${game.voiceEnabled ? "켜짐" : "꺼짐"}`;
+});
+el.pigbakToggleBtn?.addEventListener("click", () => {
+  game.pigbakEnabled = !game.pigbakEnabled;
+  el.pigbakToggleBtn.textContent = `피박: ${game.pigbakEnabled ? "켜짐" : "꺼짐"}`;
 });
 el.rulesBtn?.addEventListener("click", () => window.open("rules.html", "_blank", "noopener"));
 el.goDecisionBtn?.addEventListener("click", () => handleGoStop(true));
@@ -149,10 +155,12 @@ function makePlayer(id, name, isAI) {
     hand: [],
     captured: [],
     goCount: 0,
+    goDecisionRawTarget: WIN_THRESHOLD,
     shakeMultiplier: 1,
     shakenMonths: new Set(),
     buriedBonus: 0,
     nineAnimalAsJunk: false,
+    nineAnimalChoiceLocked: false,
     score: 0,
     stopScore: 0,
     settlementMods: [],
@@ -595,7 +603,14 @@ function afterTurnScoring(current, opponent) {
 
   if (game.gameOver) return;
 
-  if (current.score >= WIN_THRESHOLD) {
+  // 마지막 손패를 내서 고/스톱 가능 점수가 되면 강제 스톱
+  if (current.hand.length === 0 && current.score >= current.goDecisionRawTarget) {
+    logLine(`${current.name}: 마지막 패로 점수 성립, 자동 스톱`);
+    currentGoStop(false);
+    return;
+  }
+
+  if (current.score >= current.goDecisionRawTarget) {
     if (current.isAI) {
       const stop = shouldAIStop(current);
       if (stop) {
@@ -635,9 +650,12 @@ function currentGoStop(isGo) {
   if (isGo) {
     player.goCount += 1;
     updatePlayerScore(player, game.players[1 - game.turn]);
+    // 고를 한 뒤에는 현재 점수에서 1점을 더 따야 다시 고/스톱 선택 가능
+    player.goDecisionRawTarget = player.score + 1;
     logLine(`${player.name}: 고! (누적 ${player.goCount})`);
     speak("고");
   } else {
+    player.goDecisionRawTarget = WIN_THRESHOLD;
     logLine(`${player.name}: 스톱 선언`);
     speak("스톱");
     endGame(player, "", player.stopScore);
@@ -748,6 +766,7 @@ function updatePlayerScore(player, opponent = null) {
 function autoChooseNineAnimalForAI(player, opponent = null) {
   const hasNineAnimal = player.captured.some((c) => c.type === "animal" && c.month === 9);
   if (!hasNineAnimal) return;
+  if (player.nineAnimalChoiceLocked) return;
 
   const asAnimalDetail = scoreDetailWithOption(player.captured, false);
   const asJunkDetail = scoreDetailWithOption(player.captured, true);
@@ -757,15 +776,18 @@ function autoChooseNineAnimalForAI(player, opponent = null) {
 
   if (asJunkSettlement > asAnimalSettlement) {
     player.nineAnimalAsJunk = true;
+    player.nineAnimalChoiceLocked = true;
     return;
   }
   if (asAnimalSettlement > asJunkSettlement) {
     player.nineAnimalAsJunk = false;
+    player.nineAnimalChoiceLocked = true;
     return;
   }
 
   // 동점이면 일반적으로 피(쌍피)로 운용
   player.nineAnimalAsJunk = true;
+  player.nineAnimalChoiceLocked = true;
 }
 
 function calculateStopSettlement(player, detail, opponent = null) {
@@ -791,7 +813,8 @@ function calculateStopSettlement(player, detail, opponent = null) {
 
   if (opponent) {
     const opDetail = getOpponentDetailForPigbak(opponent);
-    if (detail.junkPoint > 0 && opDetail.junk < 7) {
+    // 피박: 승자가 피 점수로 이겼고, 패자 피가 1~7장일 때 적용(0장은 면제)
+    if (game.pigbakEnabled && detail.junkPoint > 0 && opDetail.junk > 0 && opDetail.junk <= 7) {
       total *= 2;
       mods.push("피박 x2");
     }
@@ -902,6 +925,8 @@ function scoreDetailWithOption(cards, nineAnimalAsJunk = false) {
 function render() {
   const me = game.players[0];
   const ai = game.players[1];
+  const aiShakeCount = Math.max(0, Math.round(Math.log2(ai.shakeMultiplier || 1)));
+  const meShakeCount = Math.max(0, Math.round(Math.log2(me.shakeMultiplier || 1)));
 
   el.turnText.textContent = game.gameOver
     ? "게임 종료"
@@ -909,16 +934,16 @@ function render() {
 
   el.aiHandCount.textContent = `손패 ${ai.hand.length}장`;
   el.aiScore.textContent = formatScoreLine(ai);
-  el.aiGo.textContent = `고 ${ai.goCount}회 | 흔들기 x${ai.shakeMultiplier}`;
+  el.aiGo.textContent = `고 ${ai.goCount}회 | 흔들기 x${aiShakeCount}`;
 
   el.humanScore.textContent = formatScoreLine(me);
-  el.humanGo.textContent = `고 ${me.goCount}회 | 흔들기 x${me.shakeMultiplier}`;
+  el.humanGo.textContent = `고 ${me.goCount}회 | 흔들기 x${meShakeCount}`;
 
   if (el.mobileAiHandCount) el.mobileAiHandCount.textContent = `손패 ${ai.hand.length}장`;
   if (el.mobileAiScore) el.mobileAiScore.textContent = formatScoreLine(ai);
-  if (el.mobileAiGo) el.mobileAiGo.textContent = `고 ${ai.goCount}회 | 흔들기 x${ai.shakeMultiplier}`;
+  if (el.mobileAiGo) el.mobileAiGo.textContent = `고 ${ai.goCount}회 | 흔들기 x${aiShakeCount}`;
   if (el.mobileHumanScore) el.mobileHumanScore.textContent = formatScoreLine(me);
-  if (el.mobileHumanGo) el.mobileHumanGo.textContent = `고 ${me.goCount}회 | 흔들기 x${me.shakeMultiplier}`;
+  if (el.mobileHumanGo) el.mobileHumanGo.textContent = `고 ${me.goCount}회 | 흔들기 x${meShakeCount}`;
 
   el.deckCount.textContent = `${game.deck.length}장`;
 
@@ -1359,6 +1384,7 @@ function formatScoreLine(player) {
 function maybeAskNineAnimalChoice(player, opponent) {
   const hasNineAnimal = player.captured.some((c) => c.type === "animal" && c.month === 9);
   if (!hasNineAnimal) return;
+  if (player.nineAnimalChoiceLocked) return;
   if (game.awaitingGoStop) return;
 
   const asAnimalDetail = scoreDetailWithOption(player.captured, false);
@@ -1386,15 +1412,17 @@ function maybeAskNineAnimalChoice(player, opponent) {
     `차이: ${diff >= 0 ? "+" : ""}${diff}점`;
   const chooseJunk = confirm(msg);
   player.nineAnimalAsJunk = chooseJunk;
+  player.nineAnimalChoiceLocked = true;
 }
 
 function logLine(text) {
   const li = document.createElement("li");
   li.textContent = text;
-  el.logList.prepend(li);
+  el.logList.appendChild(li);
   while (el.logList.children.length > 40) {
-    el.logList.removeChild(el.logList.lastChild);
+    el.logList.removeChild(el.logList.firstChild);
   }
+  el.logList.scrollTop = el.logList.scrollHeight;
 }
 
 function scheduleReminder() {
