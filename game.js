@@ -41,6 +41,12 @@ const ANIM = {
   timeoutAfterReminderMs: 5000
 };
 
+const AI_SCORE_MATCH_MULTIPLIER = 3;
+const AI_SCORE_BONUS_PRIORITY = 5;
+const AI_SCORE_GWANG_PRIORITY = 1;
+const AI_SCORE_RANDOM_WEIGHT = 0.2;
+const HUMAN_AUTO_BONUS_PRIORITY = 4;
+
 const game = {
   players: [],
   table: [],
@@ -330,8 +336,15 @@ async function runAITurn() {
 function chooseAICard(ai) {
   const scored = ai.hand.map((card) => {
     const m = game.table.filter((t) => t.month === card.month).length;
-    const bonusPriority = card.type === "bonus" ? 5 : 0;
-    return { card, score: m * 3 + (card.type === "gwang" ? 1 : 0) + bonusPriority + Math.random() * 0.2 };
+    const bonusPriority = card.type === "bonus" ? AI_SCORE_BONUS_PRIORITY : 0;
+    return {
+      card,
+      score:
+        m * AI_SCORE_MATCH_MULTIPLIER +
+        (card.type === "gwang" ? AI_SCORE_GWANG_PRIORITY : 0) +
+        bonusPriority +
+        Math.random() * AI_SCORE_RANDOM_WEIGHT
+    };
   });
 
   scored.sort((a, b) => b.score - a.score);
@@ -1492,8 +1505,11 @@ function autoPlayHumanTurn() {
 function chooseAutoCardForHuman(player) {
   const scored = player.hand.map((card) => {
     const matches = game.table.filter((t) => t.month === card.month).length;
-    const bonus = card.type === "bonus" ? 4 : 0;
-    return { card, score: matches * 3 + bonus + Math.random() * 0.2 };
+    const bonus = card.type === "bonus" ? HUMAN_AUTO_BONUS_PRIORITY : 0;
+    return {
+      card,
+      score: matches * AI_SCORE_MATCH_MULTIPLIER + bonus + Math.random() * AI_SCORE_RANDOM_WEIGHT
+    };
   });
   scored.sort((a, b) => b.score - a.score);
   return scored[0]?.card || null;
