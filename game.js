@@ -1612,6 +1612,12 @@ function getSpeechProfile(text) {
   return { rate: 1.0, pitch: 1.0, volume: 1 };
 }
 
+<<<<<<< security-fix-randomness-11676875723095870459
+function getSecureRandom() {
+  const array = new Uint32Array(1);
+  (window.crypto || window.msCrypto).getRandomValues(array);
+  return array[0] / 4294967296;
+=======
 /**
  * Returns a cryptographically secure random float in [0, 1).
  */
@@ -1639,6 +1645,7 @@ function getSecureRandom() {
     throw new Error("No secure random number generator available.");
   }
   return array[0] / (0xffffffff + 1);
+>>>>>>> main
 }
 
 function shuffle(arr) {
