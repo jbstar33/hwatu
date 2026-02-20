@@ -1521,6 +1521,10 @@ function maybeAskNineAnimalChoice(player, opponent) {
 }
 
 function logLine(text) {
+  if (!el.logList) {
+    console.log(text);
+    return;
+  }
   const li = document.createElement("li");
   li.textContent = text;
   el.logList.appendChild(li);
@@ -1650,7 +1654,18 @@ function stealJunkFromOpponent(player, count, explicitOpponent = null) {
   if (!opponent || count <= 0) return;
 
   for (let i = 0; i < count; i += 1) {
-    const idx = opponent.captured.findIndex((c) => c.type === "junk" || c.type === "bonus");
+    // Priority 1: Single Junk (value 1)
+    let idx = opponent.captured.findIndex(
+      (c) => c.type === "junk" && (c.junkValue === 1 || c.junkValue === undefined)
+    );
+
+    // Priority 2: Double Junk (value >= 2 or bonus)
+    if (idx === -1) {
+      idx = opponent.captured.findIndex(
+        (c) => c.type === "bonus" || (c.type === "junk" && c.junkValue >= 2)
+      );
+    }
+
     if (idx === -1) break;
     const [stolen] = opponent.captured.splice(idx, 1);
     player.captured.push(stolen);
@@ -1775,6 +1790,7 @@ if (typeof module !== "undefined" && module.exports) {
     CHODAN_MONTHS,
     GODORI_MONTHS,
     getSecureRandom,
-    shuffle
+    shuffle,
+    stealJunkFromOpponent
   };
 }
