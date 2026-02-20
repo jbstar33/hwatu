@@ -58,9 +58,12 @@ const game = {
   lastPlay: { human: null, ai: null },
   isAnimating: false,
   turnState: null,
-  ppukPiles: []
+  ppukPiles: [],
+  currentMultiplier: 1,
+  nextGameMultiplier: 1
 };
 
+<<<<<<< testing-improvement-settlement-calculation-3950783168132012676
 let el = {};
 if (typeof document !== "undefined") {
   el = {
@@ -100,6 +103,46 @@ if (typeof document !== "undefined") {
     voiceToggleBtn: document.getElementById("voiceToggleBtn")
   };
 
+=======
+const el = typeof document !== 'undefined' ? {
+  statusText: document.getElementById("statusText"),
+  turnText: document.getElementById("turnText"),
+  aiHandCount: document.getElementById("aiHandCount"),
+  aiScore: document.getElementById("aiScore"),
+  aiGo: document.getElementById("aiGo"),
+  humanScore: document.getElementById("humanScore"),
+  humanGo: document.getElementById("humanGo"),
+  aiHand: document.getElementById("aiHand"),
+  humanHand: document.getElementById("humanHand"),
+  tableCards: document.getElementById("tableCards"),
+  deckCount: document.getElementById("deckCount"),
+  ppukPiles: document.getElementById("ppukPiles"),
+  turnCountdown: document.getElementById("turnCountdown"),
+  goStopModal: document.getElementById("goStopModal"),
+  resultModal: document.getElementById("resultModal"),
+  resultConfetti: document.getElementById("resultConfetti"),
+  resultTitle: document.getElementById("resultTitle"),
+  resultWinner: document.getElementById("resultWinner"),
+  resultFinalScore: document.getElementById("resultFinalScore"),
+  goStopTitle: document.getElementById("goStopTitle"),
+  goStopScore: document.getElementById("goStopScore"),
+  goStopDetail: document.getElementById("goStopDetail"),
+  aiLastPlay: document.getElementById("aiLastPlay"),
+  humanLastPlay: document.getElementById("humanLastPlay"),
+  aiCapturedCards: document.getElementById("aiCapturedCards"),
+  humanCapturedCards: document.getElementById("humanCapturedCards"),
+  logList: document.getElementById("logList"),
+  goBtn: document.getElementById("goBtn"),
+  stopBtn: document.getElementById("stopBtn"),
+  rulesBtn: document.getElementById("rulesBtn"),
+  goDecisionBtn: document.getElementById("goDecisionBtn"),
+  stopDecisionBtn: document.getElementById("stopDecisionBtn"),
+  newGameBtn: document.getElementById("newGameBtn"),
+  voiceToggleBtn: document.getElementById("voiceToggleBtn")
+} : {};
+
+if (typeof document !== 'undefined') {
+>>>>>>> main
   el.newGameBtn.addEventListener("click", () => startGame());
   el.voiceToggleBtn.addEventListener("click", () => {
     game.voiceEnabled = !game.voiceEnabled;
@@ -110,10 +153,15 @@ if (typeof document !== "undefined") {
   el.rulesBtn?.addEventListener("click", () => window.open("rules.html", "_blank", "noopener"));
   el.goDecisionBtn?.addEventListener("click", () => handleGoStop(true));
   el.stopDecisionBtn?.addEventListener("click", () => handleGoStop(false));
+<<<<<<< testing-improvement-settlement-calculation-3950783168132012676
 }
 
 if (typeof window !== "undefined" && window.speechSynthesis) {
   window.speechSynthesis.addEventListener("voiceschanged", () => {
+=======
+
+  window.speechSynthesis?.addEventListener("voiceschanged", () => {
+>>>>>>> main
     game.voiceReady = true;
   });
 }
@@ -121,10 +169,11 @@ if (typeof window !== "undefined" && window.speechSynthesis) {
 function startGame() {
   clearReminder();
   hideResultOverlay();
+  const nextMult = game.nextGameMultiplier || 1;
   game.players = [makePlayer("human", "나", false), makePlayer("ai", "AI", true)];
   game.table = [];
   game.deck = shuffle(makeDeck());
-  game.turn = Math.random() < 0.5 ? 0 : 1;
+  game.turn = getSecureRandom() < 0.5 ? 0 : 1;
   game.gameOver = false;
   game.pendingChoice = null;
   game.awaitingGoStop = false;
@@ -133,10 +182,23 @@ function startGame() {
   game.countdownSeconds = 0;
   game.turnState = null;
   game.ppukPiles = [];
+  game.currentMultiplier = nextMult;
+  game.nextGameMultiplier = 1; // Reset for future, will be set again if Nagari
 
   dealCards();
+
+  const chongTong = checkChongTong();
+  if (chongTong) {
+    processDealtTableBonus(); // Just to show cards correctly before ending?
+    render();
+    setTimeout(() => {
+      endGameWithChongTong(chongTong);
+    }, 500);
+    return;
+  }
+
   processDealtTableBonus();
-  logLine("새 게임 시작");
+  logLine(`새 게임 시작${game.currentMultiplier > 1 ? ` (배수 x${game.currentMultiplier})` : ""}`);
   render();
   runTurnLoop();
 }
@@ -336,7 +398,7 @@ function chooseAICard(ai) {
   const scored = ai.hand.map((card) => {
     const m = game.table.filter((t) => t.month === card.month).length;
     const bonusPriority = card.type === "bonus" ? 5 : 0;
-    return { card, score: m * 3 + (card.type === "gwang" ? 1 : 0) + bonusPriority + Math.random() * 0.2 };
+    return { card, score: m * 3 + (card.type === "gwang" ? 1 : 0) + bonusPriority + getSecureRandom() * 0.2 };
   });
 
   scored.sort((a, b) => b.score - a.score);
@@ -351,7 +413,7 @@ async function maybeShake(player) {
 
   for (const [month, cnt] of monthCount.entries()) {
     if (cnt >= 3 && !player.shakenMonths.has(month)) {
-      const trigger = player.isAI ? Math.random() < 0.5 : false;
+      const trigger = player.isAI ? getSecureRandom() < 0.5 : false;
       if (trigger) {
         player.shakenMonths.add(month);
         player.shakeMultiplier *= 2;
@@ -501,7 +563,7 @@ function resolvePlacement(player, card, chosenTableId, fromDeck) {
 
   if (matches.length === 2) {
     if (!chosenTableId && matches.every((m) => m.type === "junk")) {
-      const autoTarget = matches[Math.floor(Math.random() * matches.length)];
+      const autoTarget = matches[Math.floor(getSecureRandom() * matches.length)];
       return resolvePlacement(player, card, autoTarget.id, fromDeck);
     }
     if (!chosenTableId) {
@@ -617,7 +679,7 @@ function afterTurnScoring(current, opponent) {
 function shouldAIStop(ai) {
   if (ai.stopScore >= 11) return true;
   if (game.deck.length <= 4 && ai.stopScore >= 8) return true;
-  if (ai.goCount >= 1 && Math.random() < 0.45) return true;
+  if (ai.goCount >= 1 && getSecureRandom() < 0.45) return true;
   return false;
 }
 
@@ -665,7 +727,12 @@ function endByDeck() {
     el.goBtn.disabled = true;
     el.stopBtn.disabled = true;
     el.statusText.textContent = "나가리: 양쪽 모두 7점 미만";
-    logLine("나가리 (다음 판 판돈 2배, 최대 8배 규칙 대상)");
+
+    // 나가리 배수 계산
+    const nextMult = (game.currentMultiplier || 1) * 2;
+    game.nextGameMultiplier = Math.min(nextMult, 8);
+    logLine(`나가리! 다음 판 점수 x${game.nextGameMultiplier} (최대 8배)`);
+
     render();
     return;
   }
@@ -799,7 +866,8 @@ function calculateStopSettlement(player, detail, opponent = null) {
 
   if (opponent) {
     const opDetail = getOpponentDetailForPigbak(opponent);
-    if (detail.junkPoint > 0 && opDetail.junk < 7) {
+    // 피박: 상대 피가 0장이면 면제 (opDetail.junk > 0)
+    if (detail.junkPoint > 0 && opDetail.junk > 0 && opDetail.junk < 7) {
       total *= 2;
       mods.push("피박 x2");
     }
@@ -811,6 +879,11 @@ function calculateStopSettlement(player, detail, opponent = null) {
       total *= 2;
       mods.push("멍박 x2");
     }
+  }
+
+  if (game.currentMultiplier && game.currentMultiplier > 1) {
+    total *= game.currentMultiplier;
+    mods.push(`나가리판 x${game.currentMultiplier}`);
   }
 
   return {
@@ -842,34 +915,48 @@ function scoreDetail(cards) {
 }
 
 function scoreDetailWithOption(cards, nineAnimalAsJunk = false) {
-  const gwangCards = cards.filter((c) => c.type === "gwang");
-  const animalCards = cards.filter(
-    (c) => c.type === "animal" && !(nineAnimalAsJunk && c.month === 9)
-  );
-  const ribbonCards = cards.filter((c) => c.type === "ribbon");
-  const animals = animalCards.length;
-  const ribbons = ribbonCards.length;
-  const nineAsJunk = cards.filter((c) => c.type === "animal" && c.month === 9 && nineAnimalAsJunk).length;
-  const junkFromCards = cards
-    .filter((c) => c.type === "junk")
-    .reduce((acc, c) => acc + (c.junkValue || 1), 0);
-  const junkFromBonus = cards
-    .filter((c) => c.type === "bonus")
-    .reduce((acc, c) => acc + (c.junkValue || 2), 0);
+  let gwangCount = 0;
+  let rainCount = 0;
+  let animals = 0;
+  let ribbons = 0;
+  let nineAsJunk = 0;
+  let junkFromCards = 0;
+  let junkFromBonus = 0;
+  const animalMonths = new Set();
+  const ribbonMonths = new Set();
+
+  for (let i = 0, len = cards.length; i < len; i++) {
+    const c = cards[i];
+    const type = c.type;
+    if (type === "gwang") {
+      gwangCount++;
+      if (c.rain) rainCount++;
+    } else if (type === "animal") {
+      if (nineAnimalAsJunk && c.month === 9) {
+        nineAsJunk++;
+      } else {
+        animals++;
+        animalMonths.add(c.month);
+      }
+    } else if (type === "ribbon") {
+      ribbons++;
+      ribbonMonths.add(c.month);
+    } else if (type === "junk") {
+      junkFromCards += (c.junkValue || 1);
+    } else if (type === "bonus") {
+      junkFromBonus += (c.junkValue || 2);
+    }
+  }
+
   // 9월 열끗을 피로 보낼 때는 쌍피(2장)로 계산
   const nineAsJunkValue = nineAsJunk * 2;
   const junk = junkFromCards + junkFromBonus + nineAsJunkValue;
-
-  const rainCount = gwangCards.filter((c) => c.rain).length;
-  const pureGwang = gwangCards.length - rainCount;
+  const pureGwang = gwangCount - rainCount;
 
   let gwangPoint = 0;
-  if (gwangCards.length >= 5) gwangPoint = 15;
-  else if (gwangCards.length === 4) gwangPoint = 4;
-  else if (gwangCards.length === 3) gwangPoint = rainCount > 0 ? 2 : 3;
-
-  const ribbonMonths = new Set(ribbonCards.map((c) => c.month));
-  const animalMonths = new Set(animalCards.map((c) => c.month));
+  if (gwangCount >= 5) gwangPoint = 15;
+  else if (gwangCount === 4) gwangPoint = 4;
+  else if (gwangCount === 3) gwangPoint = rainCount > 0 ? 2 : 3;
 
   const hasHongdan = HONGDAN_MONTHS.every((m) => ribbonMonths.has(m));
   const hasCheongdan = CHEONGDAN_MONTHS.every((m) => ribbonMonths.has(m));
@@ -886,7 +973,7 @@ function scoreDetailWithOption(cards, nineAnimalAsJunk = false) {
   const junkPoint = junk >= 10 ? junk - 9 : 0;
 
   return {
-    gwang: gwangCards.length,
+    gwang: gwangCount,
     pureGwang,
     animals,
     ribbons,
@@ -1268,7 +1355,7 @@ function markPpukIfNeeded(player, playedCard, handResult, deckOutcome) {
     removeCapturedCards(player, [playedCard.id, pickedTableCard?.id].filter(Boolean));
     removeTableCards([deckOutcome.drawn.id]);
     game.ppukPiles.push({
-      id: `ppuk-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      id: `ppuk-${Date.now()}-${getSecureRandom().toString(16).slice(2)}`,
       month: playedCard.month,
       cards: ppukCards
     });
@@ -1480,7 +1567,7 @@ function autoPlayHumanTurn() {
   if (game.gameOver || game.turn !== 0 || game.awaitingGoStop || game.isAnimating) return;
   if (game.pendingChoice) {
     const choices = game.pendingChoice.matches;
-    const pick = choices[Math.floor(Math.random() * choices.length)];
+    const pick = choices[Math.floor(getSecureRandom() * choices.length)];
     if (typeof pick === "number") {
       onTableCardChoice(pick);
     }
@@ -1498,7 +1585,7 @@ function chooseAutoCardForHuman(player) {
   const scored = player.hand.map((card) => {
     const matches = game.table.filter((t) => t.month === card.month).length;
     const bonus = card.type === "bonus" ? 4 : 0;
-    return { card, score: matches * 3 + bonus + Math.random() * 0.2 };
+    return { card, score: matches * 3 + bonus + getSecureRandom() * 0.2 };
   });
   scored.sort((a, b) => b.score - a.score);
   return scored[0]?.card || null;
@@ -1558,15 +1645,45 @@ function getSpeechProfile(text) {
   return { rate: 1.0, pitch: 1.0, volume: 1 };
 }
 
+/**
+ * Returns a cryptographically secure random float in [0, 1).
+ */
+function getSecureRandom() {
+  const array = new Uint32Array(1);
+  if (typeof window !== 'undefined' && (window.crypto || window.msCrypto)) {
+    (window.crypto || window.msCrypto).getRandomValues(array);
+  } else if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(array);
+  } else if (typeof require !== 'undefined') {
+    try {
+      const nodeCrypto = require('crypto');
+      const cryptoObj = nodeCrypto.webcrypto || nodeCrypto;
+      if (cryptoObj && cryptoObj.getRandomValues) {
+        cryptoObj.getRandomValues(array);
+      } else if (nodeCrypto.randomFillSync) {
+        nodeCrypto.randomFillSync(array);
+      } else {
+        throw new Error();
+      }
+    } catch (e) {
+      throw new Error("No secure random number generator available.");
+    }
+  } else {
+    throw new Error("No secure random number generator available.");
+  }
+  return array[0] / (0xffffffff + 1);
+}
+
 function shuffle(arr) {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(getSecureRandom() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
 }
 
+<<<<<<< testing-improvement-settlement-calculation-3950783168132012676
 if (typeof document !== "undefined") {
   startGame();
 }
@@ -1583,4 +1700,39 @@ if (typeof module !== "undefined" && module.exports) {
     CHODAN_MONTHS,
     GODORI_MONTHS
   };
+=======
+startGame();
+
+function checkChongTong() {
+  for (const p of game.players) {
+    const counts = {};
+    for (const c of p.hand) {
+      counts[c.month] = (counts[c.month] || 0) + 1;
+    }
+    for (const m in counts) {
+      if (counts[m] === 4) {
+        return { winner: p, month: m };
+      }
+    }
+  }
+  return null;
+}
+
+function endGameWithChongTong(res) {
+  const winner = res.winner;
+  const baseScore = 10;
+  const mult = game.currentMultiplier || 1;
+  const finalScore = baseScore * mult;
+
+  // 총통은 기본 10점에 배수만 적용 (고/스톱 없음)
+  winner.score = baseScore;
+  winner.stopScore = finalScore;
+
+  // 상대방 점수 0 처리
+  const loser = game.players.find(p => p.id !== winner.id);
+  loser.score = 0;
+  loser.stopScore = 0;
+
+  endGame(winner, `총통 (${res.month}월 4장) 승리`, finalScore);
+>>>>>>> main
 }
