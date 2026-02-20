@@ -120,15 +120,18 @@ if (typeof document !== 'undefined') {
   el.newGameBtn.addEventListener("click", () => startGame());
   el.voiceToggleBtn.addEventListener("click", () => {
     game.voiceEnabled = !game.voiceEnabled;
-    el.voiceToggleBtn.textContent = `음성: ${game.voiceEnabled ? "켜짐" : "꺼짐"}`;
+    el.voiceToggleBtn.classList.toggle("active", game.voiceEnabled);
+    el.voiceToggleBtn.setAttribute("aria-pressed", game.voiceEnabled);
   });
   el.sfxToggleBtn?.addEventListener("click", () => {
     const enabled = soundManager.toggle();
-    el.sfxToggleBtn.textContent = `효과음: ${enabled ? "켜짐" : "꺼짐"}`;
+    el.sfxToggleBtn.classList.toggle("active", enabled);
+    el.sfxToggleBtn.setAttribute("aria-pressed", enabled);
   });
   el.pigbakToggleBtn?.addEventListener("click", () => {
     game.pigbakEnabled = !game.pigbakEnabled;
-    el.pigbakToggleBtn.textContent = `피박: ${game.pigbakEnabled ? "켜짐" : "꺼짐"}`;
+    el.pigbakToggleBtn.classList.toggle("active", game.pigbakEnabled);
+    el.pigbakToggleBtn.setAttribute("aria-pressed", game.pigbakEnabled);
   });
   el.rulesBtn?.addEventListener("click", () => window.open("rules.html", "_blank", "noopener"));
   el.goDecisionBtn?.addEventListener("click", () => handleGoStop(true));
