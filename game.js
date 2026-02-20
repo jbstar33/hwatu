@@ -352,17 +352,15 @@ async function runAITurn() {
 }
 
 function chooseAICard(ai) {
+  const tableCounts = {};
+  for (const t of game.table) {
+    tableCounts[t.month] = (tableCounts[t.month] || 0) + 1;
+  }
+
   const scored = ai.hand.map((card) => {
-    const m = game.table.filter((t) => t.month === card.month).length;
-    const bonusPriority = card.type === "bonus" ? AI_SCORE_BONUS_PRIORITY : 0;
-    return {
-      card,
-      score:
-        m * AI_SCORE_MATCH_MULTIPLIER +
-        (card.type === "gwang" ? AI_SCORE_GWANG_PRIORITY : 0) +
-        bonusPriority +
-        Math.random() * AI_SCORE_RANDOM_WEIGHT
-    };
+    const m = tableCounts[card.month] || 0;
+    const bonusPriority = card.type === "bonus" ? 5 : 0;
+    return { card, score: m * 3 + (card.type === "gwang" ? 1 : 0) + bonusPriority + Math.random() * 0.2 };
   });
 
   scored.sort((a, b) => b.score - a.score);
@@ -1612,40 +1610,10 @@ function getSpeechProfile(text) {
   return { rate: 1.0, pitch: 1.0, volume: 1 };
 }
 
-<<<<<<< security-fix-randomness-11676875723095870459
 function getSecureRandom() {
   const array = new Uint32Array(1);
   (window.crypto || window.msCrypto).getRandomValues(array);
   return array[0] / 4294967296;
-=======
-/**
- * Returns a cryptographically secure random float in [0, 1).
- */
-function getSecureRandom() {
-  const array = new Uint32Array(1);
-  if (typeof window !== 'undefined' && (window.crypto || window.msCrypto)) {
-    (window.crypto || window.msCrypto).getRandomValues(array);
-  } else if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
-    crypto.getRandomValues(array);
-  } else if (typeof require !== 'undefined') {
-    try {
-      const nodeCrypto = require('crypto');
-      const cryptoObj = nodeCrypto.webcrypto || nodeCrypto;
-      if (cryptoObj && cryptoObj.getRandomValues) {
-        cryptoObj.getRandomValues(array);
-      } else if (nodeCrypto.randomFillSync) {
-        nodeCrypto.randomFillSync(array);
-      } else {
-        throw new Error();
-      }
-    } catch (e) {
-      throw new Error("No secure random number generator available.");
-    }
-  } else {
-    throw new Error("No secure random number generator available.");
-  }
-  return array[0] / (0xffffffff + 1);
->>>>>>> main
 }
 
 function shuffle(arr) {
