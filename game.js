@@ -1325,16 +1325,16 @@ async function animatePlayCard(card, sourceNode, fromAI) {
       : el.humanHand.getBoundingClientRect();
 
   const tableRect = el.tableCards.getBoundingClientRect();
-  const srcX = sourceRect.left + sourceRect.width / 2 - 32;
-  const srcY = sourceRect.top + sourceRect.height / 2 - 48;
+  const { w: cardW, h: cardH } = getCardSize();
+  const srcX = sourceRect.left + sourceRect.width / 2 - cardW / 2;
+  const srcY = sourceRect.top + sourceRect.height / 2 - cardH / 2;
   const target = getAnimationTargetNearMatch(card, sourceRect);
-  const dstX = target?.x ?? tableRect.left + tableRect.width / 2 - 32;
-  const dstY = target?.y ?? tableRect.top + tableRect.height / 2 - 48;
+  const dstX = target?.x ?? tableRect.left + tableRect.width / 2 - cardW / 2;
+  const dstY = target?.y ?? tableRect.top + tableRect.height / 2 - cardH / 2;
 
   flyNode.style.left = `${srcX}px`;
   flyNode.style.top = `${srcY}px`;
-  flyNode.style.width = "64px";
-  flyNode.style.height = "96px";
+  // Width/height handled by CSS class .card
 
   if (fromAI) {
     flyNode.classList.add("hand-hidden");
@@ -1404,18 +1404,19 @@ async function animateDeckDraw(card) {
 
   const deckRect = el.deckCount.getBoundingClientRect();
   const tableRect = el.tableCards.getBoundingClientRect();
-  const srcX = deckRect.left + deckRect.width / 2 - 32;
-  const srcY = deckRect.top + deckRect.height / 2 - 48;
+  const { w: cardW, h: cardH } = getCardSize();
+
+  const srcX = deckRect.left + deckRect.width / 2 - cardW / 2;
+  const srcY = deckRect.top + deckRect.height / 2 - cardH / 2;
   const target = getAnimationTargetNearMatch(card);
-  const endX = target?.x ?? tableRect.left + tableRect.width / 2 - 32;
-  const endY = target?.y ?? tableRect.top + tableRect.height / 2 - 48;
+  const endX = target?.x ?? tableRect.left + tableRect.width / 2 - cardW / 2;
+  const endY = target?.y ?? tableRect.top + tableRect.height / 2 - cardH / 2;
   const midX = srcX + (endX - srcX) * 0.55;
   const midY = srcY + (endY - srcY) * 0.55;
 
   flyNode.style.left = `${srcX}px`;
   flyNode.style.top = `${srcY}px`;
-  flyNode.style.width = "64px";
-  flyNode.style.height = "96px";
+  // Width/height handled by CSS class .card
   flyNode.classList.add("hand-hidden");
   document.body.appendChild(flyNode);
 
@@ -1957,4 +1958,14 @@ function showStamp(text, className) {
   div.textContent = text;
   document.body.appendChild(div);
   setTimeout(() => div.remove(), 2500);
+}
+
+function getCardSize() {
+  if (typeof getComputedStyle === "undefined" || typeof document === "undefined") {
+    return { w: 64, h: 96 };
+  }
+  const style = getComputedStyle(document.documentElement);
+  const w = parseFloat(style.getPropertyValue("--card-w")) || 64;
+  const h = parseFloat(style.getPropertyValue("--card-h")) || 96;
+  return { w, h };
 }
