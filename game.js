@@ -819,7 +819,7 @@ function endGame(winner, reason = "", finalScoreOverride = null) {
 function showResultOverlay(winner, finalScore) {
   if (!el.resultModal) return;
   el.resultTitle.textContent = "게임 종료";
-  el.resultWinner.textContent = `${winner.name} 승리`;
+  el.resultWinner.textContent = winner.id === "human" ? "승리" : `${winner.name} 승리`;
   el.resultFinalScore.textContent = `최종 정산 점수: ${finalScore}점`;
   el.resultModal.classList.remove("hidden");
   if (winner.id === "human") {
