@@ -21,10 +21,14 @@ def is_red(r, g, b):
 
 
 def cleanup_old_outputs():
-    patterns = ["m??_?.png", "m??_?.svg", "bonus_?.png", "bonus_?.svg"]
-    for pattern in patterns:
-        for p in OUT_DIR.glob(pattern):
-            p.unlink(missing_ok=True)
+    for p in OUT_DIR.glob("m??_?.png"):
+        p.unlink(missing_ok=True)
+    for p in OUT_DIR.glob("m??_?.svg"):
+        p.unlink(missing_ok=True)
+    for p in OUT_DIR.glob("bonus_?.png"):
+        p.unlink(missing_ok=True)
+    for p in OUT_DIR.glob("bonus_?.svg"):
+        p.unlink(missing_ok=True)
 
 
 def find_card_components(rgb):
