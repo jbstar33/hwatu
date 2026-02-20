@@ -328,8 +328,13 @@ async function runAITurn() {
 }
 
 function chooseAICard(ai) {
+  const tableCounts = {};
+  for (const t of game.table) {
+    tableCounts[t.month] = (tableCounts[t.month] || 0) + 1;
+  }
+
   const scored = ai.hand.map((card) => {
-    const m = game.table.filter((t) => t.month === card.month).length;
+    const m = tableCounts[card.month] || 0;
     const bonusPriority = card.type === "bonus" ? 5 : 0;
     return { card, score: m * 3 + (card.type === "gwang" ? 1 : 0) + bonusPriority + Math.random() * 0.2 };
   });
