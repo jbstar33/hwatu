@@ -69,47 +69,6 @@ const game = {
   nextGameMultiplier: 1
 };
 
-<<<<<<< testing-improvement-settlement-calculation-3950783168132012676
-let el = {};
-if (typeof document !== "undefined") {
-  el = {
-    statusText: document.getElementById("statusText"),
-    turnText: document.getElementById("turnText"),
-    aiHandCount: document.getElementById("aiHandCount"),
-    aiScore: document.getElementById("aiScore"),
-    aiGo: document.getElementById("aiGo"),
-    humanScore: document.getElementById("humanScore"),
-    humanGo: document.getElementById("humanGo"),
-    aiHand: document.getElementById("aiHand"),
-    humanHand: document.getElementById("humanHand"),
-    tableCards: document.getElementById("tableCards"),
-    deckCount: document.getElementById("deckCount"),
-    ppukPiles: document.getElementById("ppukPiles"),
-    turnCountdown: document.getElementById("turnCountdown"),
-    goStopModal: document.getElementById("goStopModal"),
-    resultModal: document.getElementById("resultModal"),
-    resultConfetti: document.getElementById("resultConfetti"),
-    resultTitle: document.getElementById("resultTitle"),
-    resultWinner: document.getElementById("resultWinner"),
-    resultFinalScore: document.getElementById("resultFinalScore"),
-    goStopTitle: document.getElementById("goStopTitle"),
-    goStopScore: document.getElementById("goStopScore"),
-    goStopDetail: document.getElementById("goStopDetail"),
-    aiLastPlay: document.getElementById("aiLastPlay"),
-    humanLastPlay: document.getElementById("humanLastPlay"),
-    aiCapturedCards: document.getElementById("aiCapturedCards"),
-    humanCapturedCards: document.getElementById("humanCapturedCards"),
-    logList: document.getElementById("logList"),
-    goBtn: document.getElementById("goBtn"),
-    stopBtn: document.getElementById("stopBtn"),
-    rulesBtn: document.getElementById("rulesBtn"),
-    goDecisionBtn: document.getElementById("goDecisionBtn"),
-    stopDecisionBtn: document.getElementById("stopDecisionBtn"),
-    newGameBtn: document.getElementById("newGameBtn"),
-    voiceToggleBtn: document.getElementById("voiceToggleBtn")
-  };
-
-=======
 const el = typeof document !== 'undefined' ? {
   statusText: document.getElementById("statusText"),
   turnText: document.getElementById("turnText"),
@@ -148,7 +107,6 @@ const el = typeof document !== 'undefined' ? {
 } : {};
 
 if (typeof document !== 'undefined') {
->>>>>>> main
   el.newGameBtn.addEventListener("click", () => startGame());
   el.voiceToggleBtn.addEventListener("click", () => {
     game.voiceEnabled = !game.voiceEnabled;
@@ -159,17 +117,12 @@ if (typeof document !== 'undefined') {
   el.rulesBtn?.addEventListener("click", () => window.open("rules.html", "_blank", "noopener"));
   el.goDecisionBtn?.addEventListener("click", () => handleGoStop(true));
   el.stopDecisionBtn?.addEventListener("click", () => handleGoStop(false));
-<<<<<<< testing-improvement-settlement-calculation-3950783168132012676
-}
 
-if (typeof window !== "undefined" && window.speechSynthesis) {
-  window.speechSynthesis.addEventListener("voiceschanged", () => {
-=======
-
-  window.speechSynthesis?.addEventListener("voiceschanged", () => {
->>>>>>> main
-    game.voiceReady = true;
-  });
+  if (window.speechSynthesis) {
+    window.speechSynthesis.addEventListener("voiceschanged", () => {
+      game.voiceReady = true;
+    });
+  }
 }
 
 function startGame() {
@@ -1065,7 +1018,17 @@ function renderHumanHand(me) {
       cardNode.dataset.month = String(card.month);
       if (!game.gameOver && game.turn === 0 && !game.awaitingGoStop && !game.pendingChoice) {
         cardNode.classList.add("clickable");
+        cardNode.tabIndex = 0;
+        cardNode.role = "button";
+        cardNode.ariaLabel = describeCard(card);
+
         cardNode.addEventListener("click", () => onHumanCardClick(card.id, cardNode));
+        cardNode.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onHumanCardClick(card.id, cardNode);
+          }
+        });
       }
       el.humanHand.appendChild(cardNode);
     });
@@ -1080,7 +1043,17 @@ function renderTable() {
       const node = buildCardNode(card);
       if (game.pendingChoice && game.pendingChoice.matches.includes(card.id)) {
         node.classList.add("clickable", "selected");
+        node.tabIndex = 0;
+        node.role = "button";
+        node.ariaLabel = describeCard(card);
+
         node.addEventListener("click", () => onTableCardChoice(card.id));
+        node.addEventListener("keydown", (e) => {
+          if (e.key === "Enter" || e.key === " ") {
+            e.preventDefault();
+            onTableCardChoice(card.id);
+          }
+        });
       }
       el.tableCards.appendChild(node);
     });
@@ -1662,9 +1635,21 @@ function getSpeechProfile(text) {
 }
 
 function getSecureRandom() {
-  const array = new Uint32Array(1);
-  (window.crypto || window.msCrypto).getRandomValues(array);
-  return array[0] / 4294967296;
+  if (typeof window !== "undefined" && (window.crypto || window.msCrypto)) {
+    const array = new Uint32Array(1);
+    (window.crypto || window.msCrypto).getRandomValues(array);
+    return array[0] / 4294967296;
+  }
+  if (typeof require !== "undefined") {
+    try {
+      const crypto = require("crypto");
+      return crypto.randomBytes(4).readUInt32LE(0) / 4294967296;
+    } catch (e) {
+      console.warn("Crypto module not available, falling back to Math.random");
+      return Math.random();
+    }
+  }
+  return Math.random();
 }
 
 function shuffle(arr) {
@@ -1675,26 +1660,6 @@ function shuffle(arr) {
   }
   return a;
 }
-
-<<<<<<< testing-improvement-settlement-calculation-3950783168132012676
-if (typeof document !== "undefined") {
-  startGame();
-}
-
-if (typeof module !== "undefined" && module.exports) {
-  module.exports = {
-    calculateStopSettlement,
-    getGoMultiplier,
-    getOpponentDetailForPigbak,
-    scoreDetailWithOption,
-    scoreDetail,
-    HONGDAN_MONTHS,
-    CHEONGDAN_MONTHS,
-    CHODAN_MONTHS,
-    GODORI_MONTHS
-  };
-=======
-startGame();
 
 function checkChongTong() {
   for (const p of game.players) {
@@ -1727,5 +1692,24 @@ function endGameWithChongTong(res) {
   loser.stopScore = 0;
 
   endGame(winner, `총통 (${res.month}월 4장) 승리`, finalScore);
->>>>>>> main
+}
+
+if (typeof document !== "undefined") {
+  startGame();
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    calculateStopSettlement,
+    getGoMultiplier,
+    getOpponentDetailForPigbak,
+    scoreDetailWithOption,
+    scoreDetail,
+    HONGDAN_MONTHS,
+    CHEONGDAN_MONTHS,
+    CHODAN_MONTHS,
+    GODORI_MONTHS,
+    getSecureRandom,
+    shuffle
+  };
 }

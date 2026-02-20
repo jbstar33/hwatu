@@ -1,6 +1,5 @@
 {
-<<<<<<< testing-improvement-settlement-calculation-3950783168132012676
-  "name": "matgo",
+  "name": "hwatu-matgo",
   "version": "1.0.0",
   "main": "game.js",
   "scripts": {
@@ -10,11 +9,4 @@
   "author": "",
   "license": "ISC",
   "description": ""
-=======
-  "name": "hwatu-matgo",
-  "version": "1.0.0",
-  "scripts": {
-    "test": "node --test"
-  }
->>>>>>> main
 }
