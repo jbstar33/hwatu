@@ -58,7 +58,9 @@ const game = {
   lastPlay: { human: null, ai: null },
   isAnimating: false,
   turnState: null,
-  ppukPiles: []
+  ppukPiles: [],
+  currentMultiplier: 1,
+  nextGameMultiplier: 1
 };
 
 const el = typeof document !== 'undefined' ? {
@@ -118,6 +120,7 @@ if (typeof document !== 'undefined') {
 function startGame() {
   clearReminder();
   hideResultOverlay();
+  const nextMult = game.nextGameMultiplier || 1;
   game.players = [makePlayer("human", "나", false), makePlayer("ai", "AI", true)];
   game.table = [];
   game.deck = shuffle(makeDeck());
@@ -130,10 +133,23 @@ function startGame() {
   game.countdownSeconds = 0;
   game.turnState = null;
   game.ppukPiles = [];
+  game.currentMultiplier = nextMult;
+  game.nextGameMultiplier = 1; // Reset for future, will be set again if Nagari
 
   dealCards();
+
+  const chongTong = checkChongTong();
+  if (chongTong) {
+    processDealtTableBonus(); // Just to show cards correctly before ending?
+    render();
+    setTimeout(() => {
+      endGameWithChongTong(chongTong);
+    }, 500);
+    return;
+  }
+
   processDealtTableBonus();
-  logLine("새 게임 시작");
+  logLine(`새 게임 시작${game.currentMultiplier > 1 ? ` (배수 x${game.currentMultiplier})` : ""}`);
   render();
   runTurnLoop();
 }
@@ -662,7 +678,12 @@ function endByDeck() {
     el.goBtn.disabled = true;
     el.stopBtn.disabled = true;
     el.statusText.textContent = "나가리: 양쪽 모두 7점 미만";
-    logLine("나가리 (다음 판 판돈 2배, 최대 8배 규칙 대상)");
+
+    // 나가리 배수 계산
+    const nextMult = (game.currentMultiplier || 1) * 2;
+    game.nextGameMultiplier = Math.min(nextMult, 8);
+    logLine(`나가리! 다음 판 점수 x${game.nextGameMultiplier} (최대 8배)`);
+
     render();
     return;
   }
@@ -796,7 +817,8 @@ function calculateStopSettlement(player, detail, opponent = null) {
 
   if (opponent) {
     const opDetail = getOpponentDetailForPigbak(opponent);
-    if (detail.junkPoint > 0 && opDetail.junk < 7) {
+    // 피박: 상대 피가 0장이면 면제 (opDetail.junk > 0)
+    if (detail.junkPoint > 0 && opDetail.junk > 0 && opDetail.junk < 7) {
       total *= 2;
       mods.push("피박 x2");
     }
@@ -808,6 +830,11 @@ function calculateStopSettlement(player, detail, opponent = null) {
       total *= 2;
       mods.push("멍박 x2");
     }
+  }
+
+  if (game.currentMultiplier && game.currentMultiplier > 1) {
+    total *= game.currentMultiplier;
+    mods.push(`나가리판 x${game.currentMultiplier}`);
   }
 
   return {
@@ -1593,17 +1620,37 @@ function shuffle(arr) {
   return a;
 }
 
-if (typeof document !== 'undefined') {
-  startGame();
+startGame();
+
+function checkChongTong() {
+  for (const p of game.players) {
+    const counts = {};
+    for (const c of p.hand) {
+      counts[c.month] = (counts[c.month] || 0) + 1;
+    }
+    for (const m in counts) {
+      if (counts[m] === 4) {
+        return { winner: p, month: m };
+      }
+    }
+  }
+  return null;
 }
 
-if (typeof module !== 'undefined' && module.exports) {
-  module.exports = {
-    getSecureRandom,
-    shuffle,
-    game,
-    scoreDetail,
-    scoreDetailWithOption,
-    calculateStopSettlement
-  };
+function endGameWithChongTong(res) {
+  const winner = res.winner;
+  const baseScore = 10;
+  const mult = game.currentMultiplier || 1;
+  const finalScore = baseScore * mult;
+
+  // 총통은 기본 10점에 배수만 적용 (고/스톱 없음)
+  winner.score = baseScore;
+  winner.stopScore = finalScore;
+
+  // 상대방 점수 0 처리
+  const loser = game.players.find(p => p.id !== winner.id);
+  loser.score = 0;
+  loser.stopScore = 0;
+
+  endGame(winner, `총통 (${res.month}월 4장) 승리`, finalScore);
 }
