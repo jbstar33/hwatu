@@ -61,7 +61,7 @@ const game = {
   ppukPiles: []
 };
 
-const el = {
+const el = typeof document !== 'undefined' ? {
   statusText: document.getElementById("statusText"),
   turnText: document.getElementById("turnText"),
   aiHandCount: document.getElementById("aiHandCount"),
@@ -96,22 +96,24 @@ const el = {
   stopDecisionBtn: document.getElementById("stopDecisionBtn"),
   newGameBtn: document.getElementById("newGameBtn"),
   voiceToggleBtn: document.getElementById("voiceToggleBtn")
-};
+} : {};
 
-el.newGameBtn.addEventListener("click", () => startGame());
-el.voiceToggleBtn.addEventListener("click", () => {
-  game.voiceEnabled = !game.voiceEnabled;
-  el.voiceToggleBtn.textContent = `음성: ${game.voiceEnabled ? "켜짐" : "꺼짐"}`;
-});
-el.goBtn.addEventListener("click", () => handleGoStop(true));
-el.stopBtn.addEventListener("click", () => handleGoStop(false));
-el.rulesBtn?.addEventListener("click", () => window.open("rules.html", "_blank", "noopener"));
-el.goDecisionBtn?.addEventListener("click", () => handleGoStop(true));
-el.stopDecisionBtn?.addEventListener("click", () => handleGoStop(false));
+if (typeof document !== 'undefined') {
+  el.newGameBtn.addEventListener("click", () => startGame());
+  el.voiceToggleBtn.addEventListener("click", () => {
+    game.voiceEnabled = !game.voiceEnabled;
+    el.voiceToggleBtn.textContent = `음성: ${game.voiceEnabled ? "켜짐" : "꺼짐"}`;
+  });
+  el.goBtn.addEventListener("click", () => handleGoStop(true));
+  el.stopBtn.addEventListener("click", () => handleGoStop(false));
+  el.rulesBtn?.addEventListener("click", () => window.open("rules.html", "_blank", "noopener"));
+  el.goDecisionBtn?.addEventListener("click", () => handleGoStop(true));
+  el.stopDecisionBtn?.addEventListener("click", () => handleGoStop(false));
 
-window.speechSynthesis?.addEventListener("voiceschanged", () => {
-  game.voiceReady = true;
-});
+  window.speechSynthesis?.addEventListener("voiceschanged", () => {
+    game.voiceReady = true;
+  });
+}
 
 function startGame() {
   clearReminder();
@@ -119,7 +121,7 @@ function startGame() {
   game.players = [makePlayer("human", "나", false), makePlayer("ai", "AI", true)];
   game.table = [];
   game.deck = shuffle(makeDeck());
-  game.turn = Math.random() < 0.5 ? 0 : 1;
+  game.turn = getSecureRandom() < 0.5 ? 0 : 1;
   game.gameOver = false;
   game.pendingChoice = null;
   game.awaitingGoStop = false;
@@ -331,7 +333,7 @@ function chooseAICard(ai) {
   const scored = ai.hand.map((card) => {
     const m = game.table.filter((t) => t.month === card.month).length;
     const bonusPriority = card.type === "bonus" ? 5 : 0;
-    return { card, score: m * 3 + (card.type === "gwang" ? 1 : 0) + bonusPriority + Math.random() * 0.2 };
+    return { card, score: m * 3 + (card.type === "gwang" ? 1 : 0) + bonusPriority + getSecureRandom() * 0.2 };
   });
 
   scored.sort((a, b) => b.score - a.score);
@@ -346,7 +348,7 @@ async function maybeShake(player) {
 
   for (const [month, cnt] of monthCount.entries()) {
     if (cnt >= 3 && !player.shakenMonths.has(month)) {
-      const trigger = player.isAI ? Math.random() < 0.5 : false;
+      const trigger = player.isAI ? getSecureRandom() < 0.5 : false;
       if (trigger) {
         player.shakenMonths.add(month);
         player.shakeMultiplier *= 2;
@@ -496,7 +498,7 @@ function resolvePlacement(player, card, chosenTableId, fromDeck) {
 
   if (matches.length === 2) {
     if (!chosenTableId && matches.every((m) => m.type === "junk")) {
-      const autoTarget = matches[Math.floor(Math.random() * matches.length)];
+      const autoTarget = matches[Math.floor(getSecureRandom() * matches.length)];
       return resolvePlacement(player, card, autoTarget.id, fromDeck);
     }
     if (!chosenTableId) {
@@ -612,7 +614,7 @@ function afterTurnScoring(current, opponent) {
 function shouldAIStop(ai) {
   if (ai.stopScore >= 11) return true;
   if (game.deck.length <= 4 && ai.stopScore >= 8) return true;
-  if (ai.goCount >= 1 && Math.random() < 0.45) return true;
+  if (ai.goCount >= 1 && getSecureRandom() < 0.45) return true;
   return false;
 }
 
@@ -1263,7 +1265,7 @@ function markPpukIfNeeded(player, playedCard, handResult, deckOutcome) {
     removeCapturedCards(player, [playedCard.id, pickedTableCard?.id].filter(Boolean));
     removeTableCards([deckOutcome.drawn.id]);
     game.ppukPiles.push({
-      id: `ppuk-${Date.now()}-${Math.random().toString(16).slice(2)}`,
+      id: `ppuk-${Date.now()}-${getSecureRandom().toString(16).slice(2)}`,
       month: playedCard.month,
       cards: ppukCards
     });
@@ -1475,7 +1477,7 @@ function autoPlayHumanTurn() {
   if (game.gameOver || game.turn !== 0 || game.awaitingGoStop || game.isAnimating) return;
   if (game.pendingChoice) {
     const choices = game.pendingChoice.matches;
-    const pick = choices[Math.floor(Math.random() * choices.length)];
+    const pick = choices[Math.floor(getSecureRandom() * choices.length)];
     if (typeof pick === "number") {
       onTableCardChoice(pick);
     }
@@ -1493,7 +1495,7 @@ function chooseAutoCardForHuman(player) {
   const scored = player.hand.map((card) => {
     const matches = game.table.filter((t) => t.month === card.month).length;
     const bonus = card.type === "bonus" ? 4 : 0;
-    return { card, score: matches * 3 + bonus + Math.random() * 0.2 };
+    return { card, score: matches * 3 + bonus + getSecureRandom() * 0.2 };
   });
   scored.sort((a, b) => b.score - a.score);
   return scored[0]?.card || null;
@@ -1553,13 +1555,55 @@ function getSpeechProfile(text) {
   return { rate: 1.0, pitch: 1.0, volume: 1 };
 }
 
+/**
+ * Returns a cryptographically secure random float in [0, 1).
+ */
+function getSecureRandom() {
+  const array = new Uint32Array(1);
+  if (typeof window !== 'undefined' && (window.crypto || window.msCrypto)) {
+    (window.crypto || window.msCrypto).getRandomValues(array);
+  } else if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(array);
+  } else if (typeof require !== 'undefined') {
+    try {
+      const nodeCrypto = require('crypto');
+      const cryptoObj = nodeCrypto.webcrypto || nodeCrypto;
+      if (cryptoObj && cryptoObj.getRandomValues) {
+        cryptoObj.getRandomValues(array);
+      } else if (nodeCrypto.randomFillSync) {
+        nodeCrypto.randomFillSync(array);
+      } else {
+        throw new Error();
+      }
+    } catch (e) {
+      throw new Error("No secure random number generator available.");
+    }
+  } else {
+    throw new Error("No secure random number generator available.");
+  }
+  return array[0] / (0xffffffff + 1);
+}
+
 function shuffle(arr) {
   const a = arr.slice();
   for (let i = a.length - 1; i > 0; i -= 1) {
-    const j = Math.floor(Math.random() * (i + 1));
+    const j = Math.floor(getSecureRandom() * (i + 1));
     [a[i], a[j]] = [a[j], a[i]];
   }
   return a;
 }
 
-startGame();
+if (typeof document !== 'undefined') {
+  startGame();
+}
+
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = {
+    getSecureRandom,
+    shuffle,
+    game,
+    scoreDetail,
+    scoreDetailWithOption,
+    calculateStopSettlement
+  };
+}
