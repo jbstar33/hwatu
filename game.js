@@ -837,34 +837,48 @@ function scoreDetail(cards) {
 }
 
 function scoreDetailWithOption(cards, nineAnimalAsJunk = false) {
-  const gwangCards = cards.filter((c) => c.type === "gwang");
-  const animalCards = cards.filter(
-    (c) => c.type === "animal" && !(nineAnimalAsJunk && c.month === 9)
-  );
-  const ribbonCards = cards.filter((c) => c.type === "ribbon");
-  const animals = animalCards.length;
-  const ribbons = ribbonCards.length;
-  const nineAsJunk = cards.filter((c) => c.type === "animal" && c.month === 9 && nineAnimalAsJunk).length;
-  const junkFromCards = cards
-    .filter((c) => c.type === "junk")
-    .reduce((acc, c) => acc + (c.junkValue || 1), 0);
-  const junkFromBonus = cards
-    .filter((c) => c.type === "bonus")
-    .reduce((acc, c) => acc + (c.junkValue || 2), 0);
+  let gwangCount = 0;
+  let rainCount = 0;
+  let animals = 0;
+  let ribbons = 0;
+  let nineAsJunk = 0;
+  let junkFromCards = 0;
+  let junkFromBonus = 0;
+  const animalMonths = new Set();
+  const ribbonMonths = new Set();
+
+  for (let i = 0, len = cards.length; i < len; i++) {
+    const c = cards[i];
+    const type = c.type;
+    if (type === "gwang") {
+      gwangCount++;
+      if (c.rain) rainCount++;
+    } else if (type === "animal") {
+      if (nineAnimalAsJunk && c.month === 9) {
+        nineAsJunk++;
+      } else {
+        animals++;
+        animalMonths.add(c.month);
+      }
+    } else if (type === "ribbon") {
+      ribbons++;
+      ribbonMonths.add(c.month);
+    } else if (type === "junk") {
+      junkFromCards += (c.junkValue || 1);
+    } else if (type === "bonus") {
+      junkFromBonus += (c.junkValue || 2);
+    }
+  }
+
   // 9월 열끗을 피로 보낼 때는 쌍피(2장)로 계산
   const nineAsJunkValue = nineAsJunk * 2;
   const junk = junkFromCards + junkFromBonus + nineAsJunkValue;
-
-  const rainCount = gwangCards.filter((c) => c.rain).length;
-  const pureGwang = gwangCards.length - rainCount;
+  const pureGwang = gwangCount - rainCount;
 
   let gwangPoint = 0;
-  if (gwangCards.length >= 5) gwangPoint = 15;
-  else if (gwangCards.length === 4) gwangPoint = 4;
-  else if (gwangCards.length === 3) gwangPoint = rainCount > 0 ? 2 : 3;
-
-  const ribbonMonths = new Set(ribbonCards.map((c) => c.month));
-  const animalMonths = new Set(animalCards.map((c) => c.month));
+  if (gwangCount >= 5) gwangPoint = 15;
+  else if (gwangCount === 4) gwangPoint = 4;
+  else if (gwangCount === 3) gwangPoint = rainCount > 0 ? 2 : 3;
 
   const hasHongdan = HONGDAN_MONTHS.every((m) => ribbonMonths.has(m));
   const hasCheongdan = CHEONGDAN_MONTHS.every((m) => ribbonMonths.has(m));
@@ -881,7 +895,7 @@ function scoreDetailWithOption(cards, nineAnimalAsJunk = false) {
   const junkPoint = junk >= 10 ? junk - 9 : 0;
 
   return {
-    gwang: gwangCards.length,
+    gwang: gwangCount,
     pureGwang,
     animals,
     ribbons,
