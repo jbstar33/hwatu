@@ -61,57 +61,62 @@ const game = {
   ppukPiles: []
 };
 
-const el = {
-  statusText: document.getElementById("statusText"),
-  turnText: document.getElementById("turnText"),
-  aiHandCount: document.getElementById("aiHandCount"),
-  aiScore: document.getElementById("aiScore"),
-  aiGo: document.getElementById("aiGo"),
-  humanScore: document.getElementById("humanScore"),
-  humanGo: document.getElementById("humanGo"),
-  aiHand: document.getElementById("aiHand"),
-  humanHand: document.getElementById("humanHand"),
-  tableCards: document.getElementById("tableCards"),
-  deckCount: document.getElementById("deckCount"),
-  ppukPiles: document.getElementById("ppukPiles"),
-  turnCountdown: document.getElementById("turnCountdown"),
-  goStopModal: document.getElementById("goStopModal"),
-  resultModal: document.getElementById("resultModal"),
-  resultConfetti: document.getElementById("resultConfetti"),
-  resultTitle: document.getElementById("resultTitle"),
-  resultWinner: document.getElementById("resultWinner"),
-  resultFinalScore: document.getElementById("resultFinalScore"),
-  goStopTitle: document.getElementById("goStopTitle"),
-  goStopScore: document.getElementById("goStopScore"),
-  goStopDetail: document.getElementById("goStopDetail"),
-  aiLastPlay: document.getElementById("aiLastPlay"),
-  humanLastPlay: document.getElementById("humanLastPlay"),
-  aiCapturedCards: document.getElementById("aiCapturedCards"),
-  humanCapturedCards: document.getElementById("humanCapturedCards"),
-  logList: document.getElementById("logList"),
-  goBtn: document.getElementById("goBtn"),
-  stopBtn: document.getElementById("stopBtn"),
-  rulesBtn: document.getElementById("rulesBtn"),
-  goDecisionBtn: document.getElementById("goDecisionBtn"),
-  stopDecisionBtn: document.getElementById("stopDecisionBtn"),
-  newGameBtn: document.getElementById("newGameBtn"),
-  voiceToggleBtn: document.getElementById("voiceToggleBtn")
-};
+let el = {};
+if (typeof document !== "undefined") {
+  el = {
+    statusText: document.getElementById("statusText"),
+    turnText: document.getElementById("turnText"),
+    aiHandCount: document.getElementById("aiHandCount"),
+    aiScore: document.getElementById("aiScore"),
+    aiGo: document.getElementById("aiGo"),
+    humanScore: document.getElementById("humanScore"),
+    humanGo: document.getElementById("humanGo"),
+    aiHand: document.getElementById("aiHand"),
+    humanHand: document.getElementById("humanHand"),
+    tableCards: document.getElementById("tableCards"),
+    deckCount: document.getElementById("deckCount"),
+    ppukPiles: document.getElementById("ppukPiles"),
+    turnCountdown: document.getElementById("turnCountdown"),
+    goStopModal: document.getElementById("goStopModal"),
+    resultModal: document.getElementById("resultModal"),
+    resultConfetti: document.getElementById("resultConfetti"),
+    resultTitle: document.getElementById("resultTitle"),
+    resultWinner: document.getElementById("resultWinner"),
+    resultFinalScore: document.getElementById("resultFinalScore"),
+    goStopTitle: document.getElementById("goStopTitle"),
+    goStopScore: document.getElementById("goStopScore"),
+    goStopDetail: document.getElementById("goStopDetail"),
+    aiLastPlay: document.getElementById("aiLastPlay"),
+    humanLastPlay: document.getElementById("humanLastPlay"),
+    aiCapturedCards: document.getElementById("aiCapturedCards"),
+    humanCapturedCards: document.getElementById("humanCapturedCards"),
+    logList: document.getElementById("logList"),
+    goBtn: document.getElementById("goBtn"),
+    stopBtn: document.getElementById("stopBtn"),
+    rulesBtn: document.getElementById("rulesBtn"),
+    goDecisionBtn: document.getElementById("goDecisionBtn"),
+    stopDecisionBtn: document.getElementById("stopDecisionBtn"),
+    newGameBtn: document.getElementById("newGameBtn"),
+    voiceToggleBtn: document.getElementById("voiceToggleBtn")
+  };
 
-el.newGameBtn.addEventListener("click", () => startGame());
-el.voiceToggleBtn.addEventListener("click", () => {
-  game.voiceEnabled = !game.voiceEnabled;
-  el.voiceToggleBtn.textContent = `음성: ${game.voiceEnabled ? "켜짐" : "꺼짐"}`;
-});
-el.goBtn.addEventListener("click", () => handleGoStop(true));
-el.stopBtn.addEventListener("click", () => handleGoStop(false));
-el.rulesBtn?.addEventListener("click", () => window.open("rules.html", "_blank", "noopener"));
-el.goDecisionBtn?.addEventListener("click", () => handleGoStop(true));
-el.stopDecisionBtn?.addEventListener("click", () => handleGoStop(false));
+  el.newGameBtn.addEventListener("click", () => startGame());
+  el.voiceToggleBtn.addEventListener("click", () => {
+    game.voiceEnabled = !game.voiceEnabled;
+    el.voiceToggleBtn.textContent = `음성: ${game.voiceEnabled ? "켜짐" : "꺼짐"}`;
+  });
+  el.goBtn.addEventListener("click", () => handleGoStop(true));
+  el.stopBtn.addEventListener("click", () => handleGoStop(false));
+  el.rulesBtn?.addEventListener("click", () => window.open("rules.html", "_blank", "noopener"));
+  el.goDecisionBtn?.addEventListener("click", () => handleGoStop(true));
+  el.stopDecisionBtn?.addEventListener("click", () => handleGoStop(false));
+}
 
-window.speechSynthesis?.addEventListener("voiceschanged", () => {
-  game.voiceReady = true;
-});
+if (typeof window !== "undefined" && window.speechSynthesis) {
+  window.speechSynthesis.addEventListener("voiceschanged", () => {
+    game.voiceReady = true;
+  });
+}
 
 function startGame() {
   clearReminder();
@@ -1562,4 +1567,20 @@ function shuffle(arr) {
   return a;
 }
 
-startGame();
+if (typeof document !== "undefined") {
+  startGame();
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    calculateStopSettlement,
+    getGoMultiplier,
+    getOpponentDetailForPigbak,
+    scoreDetailWithOption,
+    scoreDetail,
+    HONGDAN_MONTHS,
+    CHEONGDAN_MONTHS,
+    CHODAN_MONTHS,
+    GODORI_MONTHS
+  };
+}

@@ -1,0 +1,12 @@
+{
+  "name": "matgo",
+  "version": "1.0.0",
+  "main": "game.js",
+  "scripts": {
+    "test": "node --test game.test.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "description": ""
+}
