@@ -112,6 +112,7 @@ const el = typeof document !== 'undefined' ? {
   stopDecisionBtn: document.getElementById("stopDecisionBtn"),
   newGameBtn: document.getElementById("newGameBtn"),
   voiceToggleBtn: document.getElementById("voiceToggleBtn"),
+  sfxToggleBtn: document.getElementById("sfxToggleBtn"),
   pigbakToggleBtn: document.getElementById("pigbakToggleBtn")
 } : {};
 
@@ -120,6 +121,10 @@ if (typeof document !== 'undefined') {
   el.voiceToggleBtn.addEventListener("click", () => {
     game.voiceEnabled = !game.voiceEnabled;
     el.voiceToggleBtn.textContent = `음성: ${game.voiceEnabled ? "켜짐" : "꺼짐"}`;
+  });
+  el.sfxToggleBtn?.addEventListener("click", () => {
+    const enabled = soundManager.toggle();
+    el.sfxToggleBtn.textContent = `효과음: ${enabled ? "켜짐" : "꺼짐"}`;
   });
   el.pigbakToggleBtn?.addEventListener("click", () => {
     game.pigbakEnabled = !game.pigbakEnabled;
@@ -137,6 +142,7 @@ if (typeof document !== 'undefined') {
 }
 
 function startGame() {
+  soundManager.init();
   clearReminder();
   hideResultOverlay();
   const nextMult = game.nextGameMultiplier || 1;
@@ -294,6 +300,7 @@ function dealCards() {
     game.table.push(game.deck.pop());
   }
 
+  soundManager.playNoise(0.6, 0, 0.5, 1200); // Shuffling sound
   game.players.forEach((p) => updatePlayerScore(p));
 }
 
@@ -405,6 +412,8 @@ async function maybeShake(player) {
 
 async function onHumanCardClick(cardId, sourceNode) {
   if (game.gameOver || game.turn !== 0 || game.awaitingGoStop || game.isAnimating) return;
+  soundManager.init();
+  soundManager.playSnap();
   clearReminder();
 
   const me = game.players[0];
@@ -525,6 +534,11 @@ function resolvePlacement(player, card, chosenTableId, fromDeck) {
 
   const matches = game.table.filter((t) => t.month === card.month);
 
+  if (matches.length > 0) {
+    soundManager.playMatch();
+    showMatchEffect(matches.map((m) => m.id));
+  }
+
   if (matches.length === 0) {
     game.table.push(card);
     logLine(`${player.name}: ${describeCard(card)} 바닥에 깔림`);
@@ -548,6 +562,7 @@ function resolvePlacement(player, card, chosenTableId, fromDeck) {
     }
     const target = matches.find((m) => m.id === chosenTableId);
     if (!target) return { needsChoice: true, matches };
+    showMatchEffect([target.id]);
     takeCards(player, [card, target]);
     removeTableCards([target.id]);
     logLine(`${player.name}: 같은 월 2장 중 선택해서 먹음`);
@@ -624,7 +639,16 @@ function removeTableCards(ids) {
 }
 
 function afterTurnScoring(current, opponent) {
+  const oldScore = current.score;
   updatePlayerScore(current, opponent);
+
+  const diff = current.score - oldScore;
+  if (diff !== 0) {
+    const lane = current.id === "human" ? el.humanLane : el.aiLane;
+    showFloatingText(diff > 0 ? `+${diff}` : `${diff}`, lane, diff < 0);
+    if (diff > 0) soundManager.playPoint();
+  }
+
   updatePlayerScore(opponent, current);
   if (!current.isAI) {
     maybeAskNineAnimalChoice(current, opponent);
@@ -673,6 +697,8 @@ function currentGoStop(isGo) {
   game.awaitingGoStop = false;
 
   if (isGo) {
+    soundManager.playGo();
+    showStamp("GO", "go-stamp");
     player.goCount += 1;
     // 고를 한 뒤에는 현재 점수에서 1점을 더 따야 다시 고/스톱 선택 가능
     player.goDecisionRawTarget = player.score + 1;
@@ -680,6 +706,8 @@ function currentGoStop(isGo) {
     logLine(`${player.name}: 고! (누적 ${player.goCount})`);
     speak("고");
   } else {
+    soundManager.playStop();
+    showStamp("STOP", "stop-stamp");
     player.goDecisionRawTarget = WIN_THRESHOLD;
     logLine(`${player.name}: 스톱 선언`);
     speak("스톱");
@@ -707,6 +735,7 @@ function endByDeck() {
     const nextMult = (game.currentMultiplier || 1) * 2;
     game.nextGameMultiplier = Math.min(nextMult, 8);
     logLine(`나가리! 다음 판 점수 x${game.nextGameMultiplier} (최대 8배)`);
+    soundManager.playLose();
 
     render();
     return;
@@ -721,6 +750,7 @@ function endByDeck() {
     clearReminder();
     el.statusText.textContent = "무승부 (더미 소진)";
     logLine("무승부");
+    soundManager.playLose();
   }
 }
 
@@ -746,7 +776,10 @@ function showResultOverlay(winner, finalScore) {
   el.resultFinalScore.textContent = `최종 정산 점수: ${finalScore}점`;
   el.resultModal.classList.remove("hidden");
   if (winner.id === "human") {
+    soundManager.playWin();
     spawnConfetti(42);
+  } else {
+    soundManager.playLose();
   }
 }
 
@@ -1199,6 +1232,7 @@ function setLastPlay(playerId, card) {
 async function animatePlayCard(card, sourceNode, fromAI) {
   if (!el.tableCards) return;
   game.isAnimating = true;
+  soundManager.playSlide();
 
   const flyNode = buildCardNode(card);
   flyNode.classList.add("card-fly");
@@ -1235,6 +1269,7 @@ async function animatePlayCard(card, sourceNode, fromAI) {
 
   await wait(ANIM.playMoveMs);
   flyNode.remove();
+  soundManager.playStick();
 
   if (fromAI) {
     // AI 카드는 테이블 도착 시점에 앞면 공개
@@ -1281,6 +1316,7 @@ async function showShakeReveal(player, month) {
 async function animateDeckDraw(card) {
   if (!el.tableCards || !el.deckCount) return;
   game.isAnimating = true;
+  soundManager.playSlide();
 
   const flyNode = buildCardNode(card);
   flyNode.classList.add("card-fly", "deck-draw");
@@ -1313,6 +1349,7 @@ async function animateDeckDraw(card) {
   flyNode.style.opacity = "0.9";
   await wait(ANIM.deckToTableMs);
   flyNode.remove();
+  soundManager.playStick();
 
   el.tableCards.classList.add("flash");
   setTimeout(() => el.tableCards.classList.remove("flash"), ANIM.tableFlashMs);
@@ -1409,6 +1446,7 @@ function markPpukIfNeeded(player, playedCard, handResult, deckOutcome) {
     });
 
     logLine(`${MONTH_NAMES[playedCard.month] || playedCard.month + "월"} 뻑!`);
+    soundManager.playWarning();
     speak("앗");
     return;
   }
@@ -1777,4 +1815,48 @@ if (typeof module !== "undefined" && module.exports) {
     getSecureRandom,
     shuffle
   };
+}
+
+function showMatchEffect(cardIds) {
+  if (!el.tableCards) return;
+  cardIds.forEach(id => {
+    const node = el.tableCards.querySelector('.card[data-id="' + id + '"]');
+    if (!node) return;
+    const rect = node.getBoundingClientRect();
+
+    const ghost = node.cloneNode(true);
+    ghost.className = "card match-effect";
+    ghost.style.position = "fixed";
+    ghost.style.left = rect.left + "px";
+    ghost.style.top = rect.top + "px";
+    ghost.style.margin = "0";
+    ghost.style.zIndex = "1000";
+    ghost.style.pointerEvents = "none";
+
+    document.body.appendChild(ghost);
+    setTimeout(() => ghost.remove(), 450);
+  });
+}
+
+function showFloatingText(text, targetNode, isNegative) {
+  if (!targetNode) return;
+  const rect = targetNode.getBoundingClientRect();
+  const div = document.createElement("div");
+  div.className = "floating-text" + (isNegative ? " negative" : "");
+  div.textContent = text;
+
+  // Center roughly
+  div.style.left = (rect.left + rect.width / 2) + "px";
+  div.style.top = (rect.top + rect.height / 2) + "px";
+
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 1300);
+}
+
+function showStamp(text, className) {
+  const div = document.createElement("div");
+  div.className = className;
+  div.textContent = text;
+  document.body.appendChild(div);
+  setTimeout(() => div.remove(), 2500);
 }
