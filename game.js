@@ -430,7 +430,7 @@ async function maybeShake(player) {
 }
 
 async function onHumanCardClick(cardId, sourceNode) {
-  if (game.gameOver || game.turn !== 0 || game.awaitingGoStop || game.isAnimating) return;
+  if (game.gameOver || game.turn !== 0 || game.awaitingGoStop || game.isAnimating || game.pendingChoice) return;
   soundManager.init();
   soundManager.playSnap();
   clearReminder();
@@ -511,25 +511,37 @@ async function onTableCardChoice(tableCardId) {
 
   const player = game.players[pending.playerIdx];
   const opponent = game.players.find((p) => p.id !== player.id);
-  resolvePlacement(player, pending.card, tableCardId, pending.fromDeck);
-  game.pendingChoice = null;
 
-  if (!pending.fromDeck) {
-    const deckOutcome = await resolveDeckDraw(player);
-    markPpukIfNeeded(player, pending.card, { laidToTable: false }, deckOutcome);
+  try {
+    resolvePlacement(player, pending.card, tableCardId, pending.fromDeck);
+    game.pendingChoice = null;
 
-    if (game.pendingChoice) {
-      render();
-      return;
+    if (!pending.fromDeck) {
+      const deckOutcome = await resolveDeckDraw(player);
+      markPpukIfNeeded(player, pending.card, { laidToTable: false }, deckOutcome);
+
+      if (game.pendingChoice) {
+        render();
+        return;
+      }
+
+      finalizeBonusAfterTurn(player, opponent);
+      afterTurnScoring(player, opponent);
+      if (!game.awaitingGoStop && !game.gameOver) nextTurn();
+    } else {
+      finalizeBonusAfterTurn(player, opponent);
+      afterTurnScoring(player, opponent);
+      if (!game.awaitingGoStop && !game.gameOver) nextTurn();
     }
-
-    finalizeBonusAfterTurn(player, opponent);
-    afterTurnScoring(player, opponent);
-    if (!game.awaitingGoStop && !game.gameOver) nextTurn();
-  } else {
-    finalizeBonusAfterTurn(player, opponent);
-    afterTurnScoring(player, opponent);
-    if (!game.awaitingGoStop && !game.gameOver) nextTurn();
+  } catch (err) {
+    console.error(err);
+    logLine(`Error during choice: ${err.message}`);
+    // Attempt to recover state or force next turn if critical
+    if (!game.gameOver) {
+       // If turn seems stuck, force next turn
+       const expectedTurn = player.id === "human" ? 0 : 1;
+       if (game.turn === expectedTurn) nextTurn();
+    }
   }
 
   render();
