@@ -203,14 +203,14 @@ function makeDeck() {
     const spriteCol = month - 1;
     const spriteRow = typeof opt.slot === "number" ? opt.slot : 0;
     const monthKey = String(month).padStart(2, "0");
-    const asset = `assets/hwatu/m${monthKey}_${spriteRow}.png`;
+    // const asset = `assets/hwatu/m${monthKey}_${spriteRow}.png`;
     deck.push({
       id: id++,
       month,
       type,
       spriteCol,
       spriteRow,
-      asset,
+      // asset, // Use CSS sprite instead of individual assets to reduce server request load
       ...opt
     });
   };
