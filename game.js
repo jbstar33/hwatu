@@ -1045,16 +1045,16 @@ function render() {
 
   el.aiHandCount.textContent = `손패 ${ai.hand.length}장`;
   el.aiScore.textContent = formatScoreLine(ai);
-  el.aiGo.textContent = `고 ${ai.goCount}회 | 흔들기 x${ai.shakeMultiplier}`;
+  el.aiGo.textContent = `고 ${ai.goCount}회 | 흔들기 x${ai.shakenMonths.size}`;
 
   el.humanScore.textContent = formatScoreLine(me);
-  el.humanGo.textContent = `고 ${me.goCount}회 | 흔들기 x${me.shakeMultiplier}`;
+  el.humanGo.textContent = `고 ${me.goCount}회 | 흔들기 x${me.shakenMonths.size}`;
 
   if (el.mobileAiHandCount) el.mobileAiHandCount.textContent = `손패 ${ai.hand.length}장`;
   if (el.mobileAiScore) el.mobileAiScore.textContent = formatScoreLine(ai);
-  if (el.mobileAiGo) el.mobileAiGo.textContent = `고 ${ai.goCount}회 | 흔들기 x${ai.shakeMultiplier}`;
+  if (el.mobileAiGo) el.mobileAiGo.textContent = `고 ${ai.goCount}회 | 흔들기 x${ai.shakenMonths.size}`;
   if (el.mobileHumanScore) el.mobileHumanScore.textContent = formatScoreLine(me);
-  if (el.mobileHumanGo) el.mobileHumanGo.textContent = `고 ${me.goCount}회 | 흔들기 x${me.shakeMultiplier}`;
+  if (el.mobileHumanGo) el.mobileHumanGo.textContent = `고 ${me.goCount}회 | 흔들기 x${me.shakenMonths.size}`;
 
   el.deckCount.textContent = `${game.deck.length}장`;
 
