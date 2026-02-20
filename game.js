@@ -56,6 +56,7 @@ const game = {
   pendingChoice: null,
   awaitingGoStop: false,
   voiceEnabled: true,
+  pigbakEnabled: true,
   reminderTimer: null,
   actionTimeoutTimer: null,
   countdownTimer: null,
@@ -72,11 +73,18 @@ const game = {
 const el = typeof document !== 'undefined' ? {
   statusText: document.getElementById("statusText"),
   turnText: document.getElementById("turnText"),
+  aiLane: document.getElementById("aiLane"),
+  humanLane: document.getElementById("humanLane"),
   aiHandCount: document.getElementById("aiHandCount"),
   aiScore: document.getElementById("aiScore"),
   aiGo: document.getElementById("aiGo"),
+  mobileAiHandCount: document.getElementById("mobileAiHandCount"),
+  mobileAiScore: document.getElementById("mobileAiScore"),
+  mobileAiGo: document.getElementById("mobileAiGo"),
   humanScore: document.getElementById("humanScore"),
   humanGo: document.getElementById("humanGo"),
+  mobileHumanScore: document.getElementById("mobileHumanScore"),
+  mobileHumanGo: document.getElementById("mobileHumanGo"),
   aiHand: document.getElementById("aiHand"),
   humanHand: document.getElementById("humanHand"),
   tableCards: document.getElementById("tableCards"),
@@ -96,14 +104,15 @@ const el = typeof document !== 'undefined' ? {
   humanLastPlay: document.getElementById("humanLastPlay"),
   aiCapturedCards: document.getElementById("aiCapturedCards"),
   humanCapturedCards: document.getElementById("humanCapturedCards"),
+  mobileAiCapturedCards: document.getElementById("mobileAiCapturedCards"),
+  mobileHumanCapturedCards: document.getElementById("mobileHumanCapturedCards"),
   logList: document.getElementById("logList"),
-  goBtn: document.getElementById("goBtn"),
-  stopBtn: document.getElementById("stopBtn"),
   rulesBtn: document.getElementById("rulesBtn"),
   goDecisionBtn: document.getElementById("goDecisionBtn"),
   stopDecisionBtn: document.getElementById("stopDecisionBtn"),
   newGameBtn: document.getElementById("newGameBtn"),
-  voiceToggleBtn: document.getElementById("voiceToggleBtn")
+  voiceToggleBtn: document.getElementById("voiceToggleBtn"),
+  pigbakToggleBtn: document.getElementById("pigbakToggleBtn")
 } : {};
 
 if (typeof document !== 'undefined') {
@@ -112,8 +121,10 @@ if (typeof document !== 'undefined') {
     game.voiceEnabled = !game.voiceEnabled;
     el.voiceToggleBtn.textContent = `음성: ${game.voiceEnabled ? "켜짐" : "꺼짐"}`;
   });
-  el.goBtn.addEventListener("click", () => handleGoStop(true));
-  el.stopBtn.addEventListener("click", () => handleGoStop(false));
+  el.pigbakToggleBtn?.addEventListener("click", () => {
+    game.pigbakEnabled = !game.pigbakEnabled;
+    el.pigbakToggleBtn.textContent = `피박: ${game.pigbakEnabled ? "켜짐" : "꺼짐"}`;
+  });
   el.rulesBtn?.addEventListener("click", () => window.open("rules.html", "_blank", "noopener"));
   el.goDecisionBtn?.addEventListener("click", () => handleGoStop(true));
   el.stopDecisionBtn?.addEventListener("click", () => handleGoStop(false));
@@ -148,7 +159,7 @@ function startGame() {
 
   const chongTong = checkChongTong();
   if (chongTong) {
-    processDealtTableBonus(); // Just to show cards correctly before ending?
+    processDealtTableBonus();
     render();
     setTimeout(() => {
       endGameWithChongTong(chongTong);
@@ -170,10 +181,12 @@ function makePlayer(id, name, isAI) {
     hand: [],
     captured: [],
     goCount: 0,
+    goDecisionRawTarget: WIN_THRESHOLD,
     shakeMultiplier: 1,
     shakenMonths: new Set(),
     buriedBonus: 0,
     nineAnimalAsJunk: false,
+    nineAnimalChoiceLocked: false,
     score: 0,
     stopScore: 0,
     settlementMods: [],
@@ -190,14 +203,14 @@ function makeDeck() {
     const spriteCol = month - 1;
     const spriteRow = typeof opt.slot === "number" ? opt.slot : 0;
     const monthKey = String(month).padStart(2, "0");
-    const asset = `assets/hwatu/m${monthKey}_${spriteRow}.png`;
+    // const asset = `assets/hwatu/m${monthKey}_${spriteRow}.png`;
     deck.push({
       id: id++,
       month,
       type,
       spriteCol,
       spriteRow,
-      asset,
+      // asset, // Use CSS sprite instead of individual assets to reduce server request load
       ...opt
     });
   };
@@ -621,7 +634,7 @@ function afterTurnScoring(current, opponent) {
 
   if (game.gameOver) return;
 
-  if (current.score >= WIN_THRESHOLD) {
+  if (current.score >= current.goDecisionRawTarget) {
     if (current.isAI) {
       const stop = shouldAIStop(current);
       if (stop) {
@@ -633,8 +646,7 @@ function afterTurnScoring(current, opponent) {
       game.awaitingGoStop = true;
       clearReminder();
       el.statusText.textContent = `점수 ${current.score}점. 고/스톱을 선택하세요.`;
-      el.goBtn.disabled = false;
-      el.stopBtn.disabled = false;
+      // Buttons disabled, use modal
       render();
     }
   }
@@ -659,15 +671,16 @@ function handleGoStop(isGo) {
 function currentGoStop(isGo) {
   const player = game.players[game.turn];
   game.awaitingGoStop = false;
-  el.goBtn.disabled = true;
-  el.stopBtn.disabled = true;
 
   if (isGo) {
     player.goCount += 1;
+    // 고를 한 뒤에는 현재 점수에서 1점을 더 따야 다시 고/스톱 선택 가능
+    player.goDecisionRawTarget = player.score + 1;
     updatePlayerScore(player, game.players[1 - game.turn]);
     logLine(`${player.name}: 고! (누적 ${player.goCount})`);
     speak("고");
   } else {
+    player.goDecisionRawTarget = WIN_THRESHOLD;
     logLine(`${player.name}: 스톱 선언`);
     speak("스톱");
     endGame(player, "", player.stopScore);
@@ -688,8 +701,6 @@ function endByDeck() {
   if (p0Final < WIN_THRESHOLD && p1Final < WIN_THRESHOLD) {
     game.gameOver = true;
     clearReminder();
-    el.goBtn.disabled = true;
-    el.stopBtn.disabled = true;
     el.statusText.textContent = "나가리: 양쪽 모두 7점 미만";
 
     // 나가리 배수 계산
@@ -716,8 +727,6 @@ function endByDeck() {
 function endGame(winner, reason = "", finalScoreOverride = null) {
   game.gameOver = true;
   clearReminder();
-  el.goBtn.disabled = true;
-  el.stopBtn.disabled = true;
 
   const loser = game.players.find((p) => p.id !== winner.id);
   const finalScore = finalScoreOverride ?? winner.score;
@@ -787,19 +796,38 @@ function updatePlayerScore(player, opponent = null) {
 }
 
 function autoChooseNineAnimalForAI(player, opponent = null) {
-  const comparison = getNineAnimalComparison(player, opponent);
-  if (!comparison) return;
+  const hasNineAnimal = player.captured.some((c) => c.type === "animal" && c.month === 9);
+  if (!hasNineAnimal) return;
+  if (player.nineAnimalChoiceLocked) return;
 
-  const { asAnimalSettlement, asJunkSettlement } = comparison;
+  const asAnimalDetail = scoreDetailWithOption(player.captured, false);
+  const asJunkDetail = scoreDetailWithOption(player.captured, true);
+
+  const asAnimalSettlement = calculateStopSettlement(
+    { ...player, goCount: player.goCount, shakeMultiplier: player.shakeMultiplier },
+    asAnimalDetail,
+    opponent
+  ).stopScore;
+  const asJunkSettlement = calculateStopSettlement(
+    { ...player, goCount: player.goCount, shakeMultiplier: player.shakeMultiplier },
+    asJunkDetail,
+    opponent
+  ).stopScore;
 
   if (asJunkSettlement > asAnimalSettlement) {
     player.nineAnimalAsJunk = true;
-  } else if (asAnimalSettlement > asJunkSettlement) {
-    player.nineAnimalAsJunk = false;
-  } else {
-    // 동점이면 일반적으로 피(쌍피)로 운용
-    player.nineAnimalAsJunk = true;
+    player.nineAnimalChoiceLocked = true;
+    return;
   }
+  if (asAnimalSettlement > asJunkSettlement) {
+    player.nineAnimalAsJunk = false;
+    player.nineAnimalChoiceLocked = true;
+    return;
+  }
+
+  // 동점이면 일반적으로 피(쌍피)로 운용
+  player.nineAnimalAsJunk = true;
+  player.nineAnimalChoiceLocked = true;
 }
 
 function calculateStopSettlement(player, detail, opponent = null) {
@@ -825,8 +853,8 @@ function calculateStopSettlement(player, detail, opponent = null) {
 
   if (opponent) {
     const opDetail = getOpponentDetailForPigbak(opponent);
-    // 피박: 상대 피가 0장이면 면제 (opDetail.junk > 0)
-    if (detail.junkPoint > 0 && opDetail.junk > 0 && opDetail.junk < 7) {
+    // 피박: 승자가 피 점수로 이겼고, 패자 피가 1~7장일 때 적용(0장은 면제)
+    if (game.pigbakEnabled && detail.junkPoint > 0 && opDetail.junk > 0 && opDetail.junk <= 7) {
       total *= 2;
       mods.push("피박 x2");
     }
@@ -986,6 +1014,12 @@ function render() {
   el.humanScore.textContent = formatScoreLine(me);
   el.humanGo.textContent = `고 ${me.goCount}회 | 흔들기 x${me.shakeMultiplier}`;
 
+  if (el.mobileAiHandCount) el.mobileAiHandCount.textContent = `손패 ${ai.hand.length}장`;
+  if (el.mobileAiScore) el.mobileAiScore.textContent = formatScoreLine(ai);
+  if (el.mobileAiGo) el.mobileAiGo.textContent = `고 ${ai.goCount}회 | 흔들기 x${ai.shakeMultiplier}`;
+  if (el.mobileHumanScore) el.mobileHumanScore.textContent = formatScoreLine(me);
+  if (el.mobileHumanGo) el.mobileHumanGo.textContent = `고 ${me.goCount}회 | 흔들기 x${me.shakeMultiplier}`;
+
   el.deckCount.textContent = `${game.deck.length}장`;
 
   renderAIHand(ai.hand.length);
@@ -995,8 +1029,15 @@ function render() {
   renderLastPlay(el.humanLastPlay, game.lastPlay.human);
   renderCaptured(el.aiCapturedCards, ai);
   renderCaptured(el.humanCapturedCards, me);
+  if (el.mobileAiCapturedCards) renderCaptured(el.mobileAiCapturedCards, ai);
+  if (el.mobileHumanCapturedCards) renderCaptured(el.mobileHumanCapturedCards, me);
   renderPpukPiles();
   renderGoStopModal(me);
+
+  const humanTurnActive = !game.gameOver && game.turn === 0 && !game.isAnimating;
+  const aiTurnActive = !game.gameOver && game.turn === 1 && !game.isAnimating;
+  el.humanLane?.classList.toggle("turn-active", humanTurnActive);
+  el.aiLane?.classList.toggle("turn-active", aiTurnActive);
 }
 
 function renderAIHand(count) {
@@ -1446,11 +1487,23 @@ function formatScoreLine(player) {
 }
 
 function maybeAskNineAnimalChoice(player, opponent) {
+  const hasNineAnimal = player.captured.some((c) => c.type === "animal" && c.month === 9);
+  if (!hasNineAnimal) return;
+  if (player.nineAnimalChoiceLocked) return;
   if (game.awaitingGoStop) return;
-  const comparison = getNineAnimalComparison(player, opponent);
-  if (!comparison) return;
 
-  const { asAnimalSettlement, asJunkSettlement, asJunkDetail } = comparison;
+  const asAnimalDetail = scoreDetailWithOption(player.captured, false);
+  const asJunkDetail = scoreDetailWithOption(player.captured, true);
+  const asAnimalSettlement = calculateStopSettlement(
+    { ...player, goCount: player.goCount, shakeMultiplier: player.shakeMultiplier },
+    asAnimalDetail,
+    opponent
+  ).stopScore;
+  const asJunkSettlement = calculateStopSettlement(
+    { ...player, goCount: player.goCount, shakeMultiplier: player.shakeMultiplier },
+    asJunkDetail,
+    opponent
+  ).stopScore;
 
   const canStopWithJunk = asJunkDetail.base >= WIN_THRESHOLD;
   if (!canStopWithJunk) return;
@@ -1464,15 +1517,17 @@ function maybeAskNineAnimalChoice(player, opponent) {
     `차이: ${diff >= 0 ? "+" : ""}${diff}점`;
   const chooseJunk = confirm(msg);
   player.nineAnimalAsJunk = chooseJunk;
+  player.nineAnimalChoiceLocked = true;
 }
 
 function logLine(text) {
   const li = document.createElement("li");
   li.textContent = text;
-  el.logList.prepend(li);
+  el.logList.appendChild(li);
   while (el.logList.children.length > 40) {
-    el.logList.removeChild(el.logList.lastChild);
+    el.logList.removeChild(el.logList.firstChild);
   }
+  el.logList.scrollTop = el.logList.scrollHeight;
 }
 
 function scheduleReminder() {

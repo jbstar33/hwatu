@@ -3,6 +3,7 @@
   "version": "1.0.0",
   "main": "game.js",
   "scripts": {
+    "start": "node server.js",
     "test": "node --test game.test.js"
   },
   "keywords": [],
