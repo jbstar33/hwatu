@@ -67,7 +67,9 @@ const game = {
   turnState: null,
   ppukPiles: [],
   currentMultiplier: 1,
-  nextGameMultiplier: 1
+  nextGameMultiplier: 1,
+  initialTurn: 0,
+  forceNextTurn: undefined
 };
 
 const el = typeof document !== 'undefined' ? {
@@ -92,6 +94,9 @@ const el = typeof document !== 'undefined' ? {
   ppukPiles: document.getElementById("ppukPiles"),
   turnCountdown: document.getElementById("turnCountdown"),
   goStopModal: document.getElementById("goStopModal"),
+  nagariModal: document.getElementById("nagariModal"),
+  nagariYesBtn: document.getElementById("nagariYesBtn"),
+  nagariNoBtn: document.getElementById("nagariNoBtn"),
   resultModal: document.getElementById("resultModal"),
   resultConfetti: document.getElementById("resultConfetti"),
   resultTitle: document.getElementById("resultTitle"),
@@ -136,6 +141,8 @@ if (typeof document !== 'undefined') {
   el.rulesBtn?.addEventListener("click", () => window.open("rules.html", "_blank", "noopener"));
   el.goDecisionBtn?.addEventListener("click", () => handleGoStop(true));
   el.stopDecisionBtn?.addEventListener("click", () => handleGoStop(false));
+  el.nagariYesBtn?.addEventListener("click", () => handleNagariDecision(true));
+  el.nagariNoBtn?.addEventListener("click", () => handleNagariDecision(false));
 
   if (window.speechSynthesis) {
     window.speechSynthesis.addEventListener("voiceschanged", () => {
@@ -148,11 +155,20 @@ function startGame() {
   soundManager.init();
   clearReminder();
   hideResultOverlay();
+  hideNagariModal();
   const nextMult = game.nextGameMultiplier || 1;
   game.players = [makePlayer("human", "나", false), makePlayer("ai", "AI", true)];
   game.table = [];
   game.deck = shuffle(makeDeck());
-  game.turn = getSecureRandom() < 0.5 ? 0 : 1;
+
+  if (game.forceNextTurn !== undefined) {
+    game.turn = game.forceNextTurn;
+    game.forceNextTurn = undefined;
+  } else {
+    game.turn = getSecureRandom() < 0.5 ? 0 : 1;
+  }
+  game.initialTurn = game.turn;
+
   game.gameOver = false;
   game.pendingChoice = null;
   game.awaitingGoStop = false;
@@ -670,6 +686,13 @@ function afterTurnScoring(current, opponent) {
         currentGoStop(true);
       }
     } else {
+      // 마지막 패인 경우 자동 스톱
+      if (current.hand.length === 0) {
+        logLine("마지막 패: 점수가 났으므로 자동 스톱하여 승리합니다.");
+        currentGoStop(false);
+        return;
+      }
+
       game.awaitingGoStop = true;
       clearReminder();
       el.statusText.textContent = `점수 ${current.score}점. 고/스톱을 선택하세요.`;
@@ -733,13 +756,10 @@ function endByDeck() {
     game.gameOver = true;
     clearReminder();
     el.statusText.textContent = "나가리: 양쪽 모두 7점 미만";
-
-    // 나가리 배수 계산
-    const nextMult = (game.currentMultiplier || 1) * 2;
-    game.nextGameMultiplier = Math.min(nextMult, 8);
-    logLine(`나가리! 다음 판 점수 x${game.nextGameMultiplier} (최대 8배)`);
+    logLine("나가리! 묻고 더블로 가?");
     soundManager.playLose();
 
+    showNagariModal();
     render();
     return;
   }
@@ -790,6 +810,40 @@ function hideResultOverlay() {
   if (!el.resultModal) return;
   el.resultModal.classList.add("hidden");
   if (el.resultConfetti) el.resultConfetti.innerHTML = "";
+}
+
+function showNagariModal() {
+  if (!el.nagariModal) return;
+  el.nagariModal.classList.remove("hidden");
+}
+
+function hideNagariModal() {
+  if (!el.nagariModal) return;
+  el.nagariModal.classList.add("hidden");
+}
+
+function handleNagariDecision(double) {
+  hideNagariModal();
+  let nextMult = game.currentMultiplier || 1;
+  if (double) {
+    nextMult *= 2;
+    logLine(`묻고 더블로! 다음 판 x${nextMult}`);
+    speak("묻고 더블로 가");
+  } else {
+    logLine(`그냥 진행. 다음 판 x${nextMult}`);
+  }
+
+  game.nextGameMultiplier = Math.min(nextMult, 16); // Cap at x16 for sanity? Or 8? Previous limit was 8. I'll stick to 8 or user request. User said double.
+  // Actually previous code capped at 8. Let's cap at 16 or just allow it. The request didn't specify a cap.
+  // I will check if previous code had a cap. Yes `Math.min(nextMult, 8)`.
+  // I'll keep the cap at 16 (since x8 -> x16 is possible).
+  game.nextGameMultiplier = Math.min(nextMult, 16);
+
+  // Preserve the starter
+  game.forceNextTurn = game.initialTurn;
+
+  // Restart game after short delay
+  setTimeout(() => startGame(), 1500);
 }
 
 function spawnConfetti(count = 36) {
@@ -1752,6 +1806,7 @@ function getSpeechProfile(text) {
   if (text.includes("고")) return { rate: 1.08, pitch: 1.18, volume: 1 };
   if (text.includes("스톱")) return { rate: 0.94, pitch: 0.9, volume: 1 };
   if (text.includes("빨리")) return { rate: 1.2, pitch: 1.08, volume: 1 };
+  if (text.includes("묻고")) return { rate: 1.05, pitch: 1.05, volume: 1 };
   return { rate: 1.0, pitch: 1.0, volume: 1 };
 }
 
