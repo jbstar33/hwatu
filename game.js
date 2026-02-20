@@ -203,14 +203,14 @@ function makeDeck() {
     const spriteCol = month - 1;
     const spriteRow = typeof opt.slot === "number" ? opt.slot : 0;
     const monthKey = String(month).padStart(2, "0");
-    // const asset = `assets/hwatu/m${monthKey}_${spriteRow}.png`;
+    const asset = `assets/hwatu/m${monthKey}_${spriteRow}.webp`;
     deck.push({
       id: id++,
       month,
       type,
       spriteCol,
       spriteRow,
-      // asset, // Use CSS sprite instead of individual assets to reduce server request load
+      asset,
       ...opt
     });
   };
@@ -278,8 +278,8 @@ function makeDeck() {
   push(12, "ribbon", { slot: 2, ribbonKind: "plain" });
   push(12, "junk", { slot: 3, junkValue: 2 });
   // 보너스 패 2장은 쌍피(피 2장) 취급
-  push(13, "bonus", { slot: 0, spriteCol: 0, spriteRow: 0, junkValue: 2, asset: "assets/hwatu/bonus_1.png" });
-  push(14, "bonus", { slot: 0, spriteCol: 0, spriteRow: 0, junkValue: 2, asset: "assets/hwatu/bonus_2.png" });
+  push(13, "bonus", { slot: 0, spriteCol: 0, spriteRow: 0, junkValue: 2, asset: "assets/hwatu/bonus_1.webp" });
+  push(14, "bonus", { slot: 0, spriteCol: 0, spriteRow: 0, junkValue: 2, asset: "assets/hwatu/bonus_2.webp" });
 
   return deck;
 }

@@ -23,11 +23,11 @@ def is_red(r, g, b):
 def cleanup_old_outputs():
     for p in OUT_DIR.glob("m??_?.png"):
         p.unlink(missing_ok=True)
-    for p in OUT_DIR.glob("m??_?.svg"):
+    for p in OUT_DIR.glob("m??_?.webp"):
         p.unlink(missing_ok=True)
     for p in OUT_DIR.glob("bonus_?.png"):
         p.unlink(missing_ok=True)
-    for p in OUT_DIR.glob("bonus_?.svg"):
+    for p in OUT_DIR.glob("bonus_?.webp"):
         p.unlink(missing_ok=True)
 
 
@@ -136,12 +136,14 @@ def main():
             _, minx, miny, maxx, maxy, _, _ = rows[slot][month_idx]
             crop = src_img.crop((minx, miny, maxx + 1, maxy + 1))
             crop.resize((CARD_W, CARD_H), Image.Resampling.LANCZOS).save(
-                OUT_DIR / f"m{month_idx + 1:02d}_{slot}.png"
+                OUT_DIR / f"m{month_idx + 1:02d}_{slot}.webp",
+                "WEBP",
+                quality=80
             )
 
-    make_bonus_card(OUT_DIR / "bonus_1.png", "BONUS 1", (92, 62, 10))
-    make_bonus_card(OUT_DIR / "bonus_2.png", "BONUS 2", (92, 62, 10))
-    print("[OK] generated 48 card PNG + 2 bonus PNG in assets/hwatu")
+    make_bonus_card(OUT_DIR / "bonus_1.webp", "BONUS 1", (92, 62, 10))
+    make_bonus_card(OUT_DIR / "bonus_2.webp", "BONUS 2", (92, 62, 10))
+    print("[OK] generated 48 card WebP + 2 bonus WebP in assets/hwatu")
 
 
 if __name__ == "__main__":
