@@ -61,7 +61,7 @@ const game = {
   ppukPiles: []
 };
 
-const el = {
+const el = typeof document !== "undefined" ? {
   statusText: document.getElementById("statusText"),
   turnText: document.getElementById("turnText"),
   aiHandCount: document.getElementById("aiHandCount"),
@@ -96,22 +96,24 @@ const el = {
   stopDecisionBtn: document.getElementById("stopDecisionBtn"),
   newGameBtn: document.getElementById("newGameBtn"),
   voiceToggleBtn: document.getElementById("voiceToggleBtn")
-};
+} : {};
 
-el.newGameBtn.addEventListener("click", () => startGame());
-el.voiceToggleBtn.addEventListener("click", () => {
-  game.voiceEnabled = !game.voiceEnabled;
-  el.voiceToggleBtn.textContent = `음성: ${game.voiceEnabled ? "켜짐" : "꺼짐"}`;
-});
-el.goBtn.addEventListener("click", () => handleGoStop(true));
-el.stopBtn.addEventListener("click", () => handleGoStop(false));
-el.rulesBtn?.addEventListener("click", () => window.open("rules.html", "_blank", "noopener"));
-el.goDecisionBtn?.addEventListener("click", () => handleGoStop(true));
-el.stopDecisionBtn?.addEventListener("click", () => handleGoStop(false));
+if (typeof document !== "undefined") {
+  el.newGameBtn.addEventListener("click", () => startGame());
+  el.voiceToggleBtn.addEventListener("click", () => {
+    game.voiceEnabled = !game.voiceEnabled;
+    el.voiceToggleBtn.textContent = `음성: ${game.voiceEnabled ? "켜짐" : "꺼짐"}`;
+  });
+  el.goBtn.addEventListener("click", () => handleGoStop(true));
+  el.stopBtn.addEventListener("click", () => handleGoStop(false));
+  el.rulesBtn?.addEventListener("click", () => window.open("rules.html", "_blank", "noopener"));
+  el.goDecisionBtn?.addEventListener("click", () => handleGoStop(true));
+  el.stopDecisionBtn?.addEventListener("click", () => handleGoStop(false));
 
-window.speechSynthesis?.addEventListener("voiceschanged", () => {
-  game.voiceReady = true;
-});
+  window.speechSynthesis?.addEventListener("voiceschanged", () => {
+    game.voiceReady = true;
+  });
+}
 
 function startGame() {
   clearReminder();
@@ -1562,4 +1564,16 @@ function shuffle(arr) {
   return a;
 }
 
-startGame();
+if (typeof document !== "undefined") {
+  startGame();
+}
+
+if (typeof module !== "undefined" && module.exports) {
+  module.exports = {
+    scoreDetailWithOption,
+    HONGDAN_MONTHS,
+    CHEONGDAN_MONTHS,
+    CHODAN_MONTHS,
+    GODORI_MONTHS
+  };
+}

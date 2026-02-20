@@ -1,0 +1,10 @@
+{
+  "name": "hwatu-matgo",
+  "version": "1.0.0",
+  "description": "Hwatu Matgo game with testing support",
+  "main": "game.js",
+  "scripts": {
+    "test": "node --test"
+  },
+  "type": "commonjs"
+}
