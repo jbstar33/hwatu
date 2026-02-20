@@ -379,9 +379,21 @@ button.toggle-btn.active {
 
 .captured-cards .card {
   /* Slightly smaller for captured piles */
-  width: calc(var(--card-w) * 0.6);
-  height: calc(var(--card-h) * 0.6);
+  width: calc(var(--card-w) * 0.85);
+  height: calc(var(--card-h) * 0.85);
   box-shadow: 0 1px 3px rgba(0,0,0,0.5);
+}
+
+.ppuk-stack {
+  position: relative;
+  width: var(--card-w);
+  height: var(--card-h);
+}
+
+.ppuk-stack .card {
+  position: absolute;
+  top: 0;
+  left: 0;
 }
 
 /* Last Play */
@@ -480,8 +492,8 @@ button.toggle-btn.active {
 
   /* Compact captured cards on mobile */
   .captured-cards .card {
-    width: calc(var(--card-w) * 0.55);
-    height: calc(var(--card-h) * 0.55);
+    width: calc(var(--card-w) * 0.7);
+    height: calc(var(--card-h) * 0.7);
   }
 
   #turnText { display: none; }
