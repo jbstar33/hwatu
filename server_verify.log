@@ -1,0 +1,7 @@
+
+> hwatu-matgo@1.0.0 start
+> node server.js
+
+Server running at http://0.0.0.0:3000/
+GET /index.html
+Terminated
