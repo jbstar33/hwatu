@@ -29,8 +29,8 @@ const CHODAN_MONTHS = [4, 5, 7];
 const GODORI_MONTHS = [2, 4, 8];
 const WIN_THRESHOLD = 7;
 const ANIM = {
-  aiThinkMs: 950,
-  playMoveMs: 420,
+  aiThinkMs: 1400,
+  playMoveMs: 500,
   tableFlashMs: 360,
   humanShakeMs: 1100,
   aiShakeMs: 1200,
@@ -102,11 +102,10 @@ const el = typeof document !== 'undefined' ? {
   resultTitle: document.getElementById("resultTitle"),
   resultWinner: document.getElementById("resultWinner"),
   resultFinalScore: document.getElementById("resultFinalScore"),
+  restartBtn: document.getElementById("restartBtn"),
   goStopTitle: document.getElementById("goStopTitle"),
   goStopScore: document.getElementById("goStopScore"),
   goStopDetail: document.getElementById("goStopDetail"),
-  aiLastPlay: document.getElementById("aiLastPlay"),
-  humanLastPlay: document.getElementById("humanLastPlay"),
   aiCapturedCards: document.getElementById("aiCapturedCards"),
   humanCapturedCards: document.getElementById("humanCapturedCards"),
   mobileAiCapturedCards: document.getElementById("mobileAiCapturedCards"),
@@ -123,6 +122,7 @@ const el = typeof document !== 'undefined' ? {
 
 if (typeof document !== 'undefined') {
   el.newGameBtn.addEventListener("click", () => startGame());
+  el.restartBtn?.addEventListener("click", () => startGame());
   el.voiceToggleBtn.addEventListener("click", () => {
     game.voiceEnabled = !game.voiceEnabled;
     el.voiceToggleBtn.classList.toggle("active", game.voiceEnabled);
@@ -370,7 +370,10 @@ async function runAITurn() {
     }
     await animatePlayCard(card, null, true);
     logLine(`AI가 ${describeCard(card)} 를 냈습니다.`);
-    setLastPlay("ai", card);
+
+    // Pause
+    await wait(500);
+
     const result = resolvePlacement(ai, card, null, false);
     if (result.bonusUsed) {
       continue;
@@ -382,6 +385,7 @@ async function runAITurn() {
     }
   }
 
+  await wait(400);
   const deckOutcome = await resolveDeckDraw(ai);
   markPpukIfNeeded(ai, playedCard, handResult, deckOutcome);
   finalizeBonusAfterTurn(ai, me);
@@ -449,7 +453,6 @@ async function onHumanCardClick(cardId, sourceNode) {
   await animatePlayCard(card, sourceNode, false);
 
   logLine(`내가 ${describeCard(card)} 를 냈습니다.`);
-  setLastPlay("human", card);
   const handResult = resolvePlacement(me, card, null, false);
   if (handResult.bonusUsed) {
     scheduleReminder();
@@ -1139,8 +1142,6 @@ function render() {
   renderAIHand(ai.hand.length);
   renderHumanHand(me);
   renderTable();
-  renderLastPlay(el.aiLastPlay, game.lastPlay.ai);
-  renderLastPlay(el.humanLastPlay, game.lastPlay.human);
   renderCaptured(el.aiCapturedCards, ai);
   renderCaptured(el.humanCapturedCards, me);
   if (el.mobileAiCapturedCards) renderCaptured(el.mobileAiCapturedCards, ai);
@@ -1246,17 +1247,6 @@ function renderCaptured(cardsContainer, player) {
   cardsContainer.appendChild(fragment);
 }
 
-function renderLastPlay(container, card) {
-  container.innerHTML = "";
-  if (!card) {
-    const placeholder = document.createElement("p");
-    placeholder.textContent = "아직 없음";
-    container.appendChild(placeholder);
-    return;
-  }
-  container.appendChild(buildCardNode(card));
-}
-
 function renderPpukPiles() {
   if (!el.ppukPiles) return;
   el.ppukPiles.innerHTML = "";
@@ -1306,10 +1296,6 @@ function buildCardNode(card) {
   return node;
 }
 
-function setLastPlay(playerId, card) {
-  game.lastPlay[playerId] = { ...card };
-}
-
 async function animatePlayCard(card, sourceNode, fromAI) {
   if (!el.tableCards) return;
   game.isAnimating = true;
@@ -1351,11 +1337,6 @@ async function animatePlayCard(card, sourceNode, fromAI) {
   await wait(ANIM.playMoveMs);
   flyNode.remove();
   soundManager.playStick();
-
-  if (fromAI) {
-    // AI 카드는 테이블 도착 시점에 앞면 공개
-    setLastPlay("ai", card);
-  }
 
   el.tableCards.classList.add("flash");
   setTimeout(() => el.tableCards.classList.remove("flash"), ANIM.tableFlashMs);

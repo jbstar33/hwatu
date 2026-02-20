@@ -167,9 +167,16 @@ button.toggle-btn.active {
 }
 
 .player-lane.turn-active {
-  background: rgba(255, 215, 0, 0.05);
-  border: 1px solid rgba(255, 215, 0, 0.4);
-  box-shadow: 0 0 30px rgba(255, 215, 0, 0.1);
+  background: rgba(255, 215, 0, 0.1);
+  border: 2px solid var(--gold);
+  box-shadow: 0 0 40px var(--gold-glow);
+}
+
+/* Reduced AI Hand Size */
+.ai-lane .card {
+  width: calc(var(--card-w) * 0.7);
+  height: calc(var(--card-h) * 0.7);
+  box-shadow: 0 2px 4px rgba(0,0,0,0.5);
 }
 
 .table-stage {
@@ -201,6 +208,18 @@ button.toggle-btn.active {
   border: 1px solid var(--panel-border);
   backdrop-filter: blur(16px);
   box-shadow: var(--shadow-soft);
+}
+
+/* Minimized Status Text */
+#statusText {
+  font-size: 0.9rem;
+  opacity: 0.7;
+  margin-bottom: 4px;
+}
+#turnText {
+  font-size: 1.1rem;
+  font-weight: 700;
+  color: var(--gold);
 }
 
 .side-panel {
@@ -379,13 +398,14 @@ button.toggle-btn.active {
 #stopDecisionBtn { background: #d32f2f; color: white; box-shadow: 0 4px 0 #b71c1c; }
 #stopDecisionBtn:hover { background: #e53935; }
 
-/* Captured Cards Area - Improved Scrolling */
+/* Captured Cards Area - Improved Stacking */
 .captured-cards {
   margin-top: 10px;
   display: flex;
   flex-wrap: wrap;
-  gap: 4px;
-  padding: 8px;
+  /* Reduced gap and using negative margin on children for stacking */
+  gap: 0;
+  padding: 8px 8px 8px 20px; /* Left padding for first card offset */
   background: rgba(0, 0, 0, 0.3);
   border-radius: 8px;
   max-height: 200px;
@@ -399,23 +419,41 @@ button.toggle-btn.active {
 .captured-cards::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.3); border-radius: 3px; }
 
 .captured-cards .card {
-  width: calc(var(--card-w) * 0.7);
-  height: calc(var(--card-h) * 0.7);
-  box-shadow: 0 2px 4px rgba(0,0,0,0.4);
+  width: calc(var(--card-w) * 0.6);
+  height: calc(var(--card-h) * 0.6);
+  box-shadow: -2px 0 4px rgba(0,0,0,0.4);
   flex-shrink: 0;
+  margin-left: -25px; /* Overlap */
+  transition: transform 0.2s;
+}
+
+.captured-cards .card:first-child {
+  margin-left: 0;
+}
+
+.captured-cards .card:hover {
+  transform: translateY(-4px) scale(1.1);
+  z-index: 100;
+  margin-right: 20px; /* Make space to see */
 }
 
 .ppuk-stack { position: relative; width: var(--card-w); height: var(--card-h); flex-shrink: 0; }
 .ppuk-stack .card { position: absolute; top: 0; left: 0; }
 
-.last-play {
-  min-height: 80px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(255,255,255,0.05);
+.restart-btn {
+  background: linear-gradient(135deg, var(--gold), #fbc02d);
+  color: #3e2723;
+  font-size: 1.2rem;
+  padding: 12px 24px;
   border-radius: 8px;
-  padding: 8px;
+  font-weight: 800;
+  margin-top: 16px;
+  width: 100%;
+  box-shadow: 0 4px 12px rgba(255, 215, 0, 0.4);
+}
+.restart-btn:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 16px rgba(255, 215, 0, 0.6);
 }
 
 .log-section {
