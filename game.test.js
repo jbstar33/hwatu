@@ -1,11 +1,12 @@
 const test = require('node:test');
 const assert = require('node:assert');
-<<<<<<< testing-improvement-settlement-calculation-3950783168132012676
 const {
   calculateStopSettlement,
   getGoMultiplier,
   getOpponentDetailForPigbak,
-  scoreDetailWithOption
+  scoreDetailWithOption,
+  getSecureRandom,
+  shuffle
 } = require('./game.js');
 
 test('calculateStopSettlement - Basic scoring', () => {
@@ -108,7 +109,7 @@ test('calculateStopSettlement - Cumulative multipliers', () => {
   const player = { goCount: 3, shakeMultiplier: 2 }; // 3-go (2x), shake (2x)
   const detail = { base: 7, junkPoint: 1, gwangPoint: 3, gwang: 3, animals: 7 }; // Winner has Pi, Gwang(3), Animals(7)
   const opponent = {
-    captured: [], // Pi-bak (0 junk < 7), Gwang-bak (0 gwang)
+    captured: [{ type: 'junk', junkValue: 1 }], // Pi-bak (1 junk < 7) - 0 junk is exempt
     nineAnimalAsJunk: false
   };
 
@@ -154,8 +155,7 @@ test('getGoMultiplier', () => {
   assert.strictEqual(getGoMultiplier(4), 4);
   assert.strictEqual(getGoMultiplier(5), 8);
   assert.strictEqual(getGoMultiplier(6), 16);
-=======
-const { getSecureRandom, shuffle } = require('./game.js');
+});
 
 test('getSecureRandom returns a number between 0 and 1', () => {
   for (let i = 0; i < 1000; i++) {
@@ -179,5 +179,4 @@ test('shuffle does not mutate original array', () => {
   const inputCopy = [...input];
   shuffle(input);
   assert.deepStrictEqual(input, inputCopy);
->>>>>>> main
 });

@@ -45,7 +45,7 @@
             <button id="stopBtn" disabled>스톱</button>
           </section>
           <div id="turnCountdown" class="turn-countdown hidden" aria-live="polite"></div>
-          <div id="goStopModal" class="go-stop-modal hidden" role="dialog" aria-modal="true">
+          <div id="goStopModal" class="go-stop-modal hidden" role="dialog" aria-modal="true" aria-labelledby="goStopTitle" aria-describedby="goStopScore">
             <div class="go-stop-card">
               <h3 id="goStopTitle">고/스톱 선택</h3>
               <p id="goStopScore"></p>
@@ -56,7 +56,7 @@
               </div>
             </div>
           </div>
-          <div id="resultModal" class="result-modal hidden" role="dialog" aria-modal="true">
+          <div id="resultModal" class="result-modal hidden" role="dialog" aria-modal="true" aria-labelledby="resultTitle" aria-describedby="resultWinner">
             <div id="resultConfetti" class="result-confetti" aria-hidden="true"></div>
             <div class="result-card">
               <h3 id="resultTitle">게임 종료</h3>
@@ -68,8 +68,8 @@
 
         <aside class="side-panel">
           <section class="status-panel">
-            <p id="statusText">게임 준비 중...</p>
-            <p id="turnText"></p>
+            <p id="statusText" aria-live="polite" role="status">게임 준비 중...</p>
+            <p id="turnText" aria-live="polite"></p>
           </section>
 
           <section class="capture-box player-info-box">
