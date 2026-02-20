@@ -1001,15 +1001,18 @@ function render() {
 
 function renderAIHand(count) {
   el.aiHand.innerHTML = "";
+  const fragment = document.createDocumentFragment();
   for (let i = 0; i < count; i += 1) {
     const node = document.createElement("div");
     node.className = "card";
-    el.aiHand.appendChild(node);
+    fragment.appendChild(node);
   }
+  el.aiHand.appendChild(fragment);
 }
 
 function renderHumanHand(me) {
   el.humanHand.innerHTML = "";
+  const fragment = document.createDocumentFragment();
   me.hand
     .slice()
     .sort((a, b) => a.month - b.month)
@@ -1030,12 +1033,14 @@ function renderHumanHand(me) {
           }
         });
       }
-      el.humanHand.appendChild(cardNode);
+      fragment.appendChild(cardNode);
     });
+  el.humanHand.appendChild(fragment);
 }
 
 function renderTable() {
   el.tableCards.innerHTML = "";
+  const fragment = document.createDocumentFragment();
   game.table
     .slice()
     .sort((a, b) => a.month - b.month)
@@ -1055,8 +1060,9 @@ function renderTable() {
           }
         });
       }
-      el.tableCards.appendChild(node);
+      fragment.appendChild(node);
     });
+  el.tableCards.appendChild(fragment);
 }
 
 function renderCaptured(cardsContainer, player) {
@@ -1068,6 +1074,7 @@ function renderCaptured(cardsContainer, player) {
     return 4;
   };
   cardsContainer.innerHTML = "";
+  const fragment = document.createDocumentFragment();
   player.captured
     .slice()
     .sort((a, b) => {
@@ -1079,8 +1086,9 @@ function renderCaptured(cardsContainer, player) {
       return a.month - b.month;
     })
     .forEach((card) => {
-      cardsContainer.appendChild(buildCardNode(card));
+      fragment.appendChild(buildCardNode(card));
     });
+  cardsContainer.appendChild(fragment);
 }
 
 function renderLastPlay(container, card) {
@@ -1097,6 +1105,7 @@ function renderLastPlay(container, card) {
 function renderPpukPiles() {
   if (!el.ppukPiles) return;
   el.ppukPiles.innerHTML = "";
+  const fragment = document.createDocumentFragment();
   game.ppukPiles.forEach((pile) => {
     const stack = document.createElement("div");
     stack.className = "ppuk-stack";
@@ -1105,8 +1114,9 @@ function renderPpukPiles() {
       node.style.transform = `translate(${idx * 2}px, ${idx * 2}px)`;
       stack.appendChild(node);
     });
-    el.ppukPiles.appendChild(stack);
+    fragment.appendChild(stack);
   });
+  el.ppukPiles.appendChild(fragment);
 }
 
 function buildCardNode(card) {
