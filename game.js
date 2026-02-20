@@ -58,10 +58,12 @@ const game = {
   lastPlay: { human: null, ai: null },
   isAnimating: false,
   turnState: null,
-  ppukPiles: []
+  ppukPiles: [],
+  currentMultiplier: 1,
+  nextGameMultiplier: 1
 };
 
-const el = {
+const el = typeof document !== 'undefined' ? {
   statusText: document.getElementById("statusText"),
   turnText: document.getElementById("turnText"),
   aiHandCount: document.getElementById("aiHandCount"),
@@ -96,26 +98,29 @@ const el = {
   stopDecisionBtn: document.getElementById("stopDecisionBtn"),
   newGameBtn: document.getElementById("newGameBtn"),
   voiceToggleBtn: document.getElementById("voiceToggleBtn")
-};
+} : {};
 
-el.newGameBtn.addEventListener("click", () => startGame());
-el.voiceToggleBtn.addEventListener("click", () => {
-  game.voiceEnabled = !game.voiceEnabled;
-  el.voiceToggleBtn.textContent = `음성: ${game.voiceEnabled ? "켜짐" : "꺼짐"}`;
-});
-el.goBtn.addEventListener("click", () => handleGoStop(true));
-el.stopBtn.addEventListener("click", () => handleGoStop(false));
-el.rulesBtn?.addEventListener("click", () => window.open("rules.html", "_blank", "noopener"));
-el.goDecisionBtn?.addEventListener("click", () => handleGoStop(true));
-el.stopDecisionBtn?.addEventListener("click", () => handleGoStop(false));
+if (typeof document !== 'undefined') {
+  el.newGameBtn.addEventListener("click", () => startGame());
+  el.voiceToggleBtn.addEventListener("click", () => {
+    game.voiceEnabled = !game.voiceEnabled;
+    el.voiceToggleBtn.textContent = `음성: ${game.voiceEnabled ? "켜짐" : "꺼짐"}`;
+  });
+  el.goBtn.addEventListener("click", () => handleGoStop(true));
+  el.stopBtn.addEventListener("click", () => handleGoStop(false));
+  el.rulesBtn?.addEventListener("click", () => window.open("rules.html", "_blank", "noopener"));
+  el.goDecisionBtn?.addEventListener("click", () => handleGoStop(true));
+  el.stopDecisionBtn?.addEventListener("click", () => handleGoStop(false));
 
-window.speechSynthesis?.addEventListener("voiceschanged", () => {
-  game.voiceReady = true;
-});
+  window.speechSynthesis?.addEventListener("voiceschanged", () => {
+    game.voiceReady = true;
+  });
+}
 
 function startGame() {
   clearReminder();
   hideResultOverlay();
+  const nextMult = game.nextGameMultiplier || 1;
   game.players = [makePlayer("human", "나", false), makePlayer("ai", "AI", true)];
   game.table = [];
   game.deck = shuffle(makeDeck());
@@ -128,10 +133,23 @@ function startGame() {
   game.countdownSeconds = 0;
   game.turnState = null;
   game.ppukPiles = [];
+  game.currentMultiplier = nextMult;
+  game.nextGameMultiplier = 1; // Reset for future, will be set again if Nagari
 
   dealCards();
+
+  const chongTong = checkChongTong();
+  if (chongTong) {
+    processDealtTableBonus(); // Just to show cards correctly before ending?
+    render();
+    setTimeout(() => {
+      endGameWithChongTong(chongTong);
+    }, 500);
+    return;
+  }
+
   processDealtTableBonus();
-  logLine("새 게임 시작");
+  logLine(`새 게임 시작${game.currentMultiplier > 1 ? ` (배수 x${game.currentMultiplier})` : ""}`);
   render();
   runTurnLoop();
 }
@@ -660,7 +678,12 @@ function endByDeck() {
     el.goBtn.disabled = true;
     el.stopBtn.disabled = true;
     el.statusText.textContent = "나가리: 양쪽 모두 7점 미만";
-    logLine("나가리 (다음 판 판돈 2배, 최대 8배 규칙 대상)");
+
+    // 나가리 배수 계산
+    const nextMult = (game.currentMultiplier || 1) * 2;
+    game.nextGameMultiplier = Math.min(nextMult, 8);
+    logLine(`나가리! 다음 판 점수 x${game.nextGameMultiplier} (최대 8배)`);
+
     render();
     return;
   }
@@ -794,7 +817,8 @@ function calculateStopSettlement(player, detail, opponent = null) {
 
   if (opponent) {
     const opDetail = getOpponentDetailForPigbak(opponent);
-    if (detail.junkPoint > 0 && opDetail.junk < 7) {
+    // 피박: 상대 피가 0장이면 면제 (opDetail.junk > 0)
+    if (detail.junkPoint > 0 && opDetail.junk > 0 && opDetail.junk < 7) {
       total *= 2;
       mods.push("피박 x2");
     }
@@ -806,6 +830,11 @@ function calculateStopSettlement(player, detail, opponent = null) {
       total *= 2;
       mods.push("멍박 x2");
     }
+  }
+
+  if (game.currentMultiplier && game.currentMultiplier > 1) {
+    total *= game.currentMultiplier;
+    mods.push(`나가리판 x${game.currentMultiplier}`);
   }
 
   return {
@@ -837,34 +866,48 @@ function scoreDetail(cards) {
 }
 
 function scoreDetailWithOption(cards, nineAnimalAsJunk = false) {
-  const gwangCards = cards.filter((c) => c.type === "gwang");
-  const animalCards = cards.filter(
-    (c) => c.type === "animal" && !(nineAnimalAsJunk && c.month === 9)
-  );
-  const ribbonCards = cards.filter((c) => c.type === "ribbon");
-  const animals = animalCards.length;
-  const ribbons = ribbonCards.length;
-  const nineAsJunk = cards.filter((c) => c.type === "animal" && c.month === 9 && nineAnimalAsJunk).length;
-  const junkFromCards = cards
-    .filter((c) => c.type === "junk")
-    .reduce((acc, c) => acc + (c.junkValue || 1), 0);
-  const junkFromBonus = cards
-    .filter((c) => c.type === "bonus")
-    .reduce((acc, c) => acc + (c.junkValue || 2), 0);
+  let gwangCount = 0;
+  let rainCount = 0;
+  let animals = 0;
+  let ribbons = 0;
+  let nineAsJunk = 0;
+  let junkFromCards = 0;
+  let junkFromBonus = 0;
+  const animalMonths = new Set();
+  const ribbonMonths = new Set();
+
+  for (let i = 0, len = cards.length; i < len; i++) {
+    const c = cards[i];
+    const type = c.type;
+    if (type === "gwang") {
+      gwangCount++;
+      if (c.rain) rainCount++;
+    } else if (type === "animal") {
+      if (nineAnimalAsJunk && c.month === 9) {
+        nineAsJunk++;
+      } else {
+        animals++;
+        animalMonths.add(c.month);
+      }
+    } else if (type === "ribbon") {
+      ribbons++;
+      ribbonMonths.add(c.month);
+    } else if (type === "junk") {
+      junkFromCards += (c.junkValue || 1);
+    } else if (type === "bonus") {
+      junkFromBonus += (c.junkValue || 2);
+    }
+  }
+
   // 9월 열끗을 피로 보낼 때는 쌍피(2장)로 계산
   const nineAsJunkValue = nineAsJunk * 2;
   const junk = junkFromCards + junkFromBonus + nineAsJunkValue;
-
-  const rainCount = gwangCards.filter((c) => c.rain).length;
-  const pureGwang = gwangCards.length - rainCount;
+  const pureGwang = gwangCount - rainCount;
 
   let gwangPoint = 0;
-  if (gwangCards.length >= 5) gwangPoint = 15;
-  else if (gwangCards.length === 4) gwangPoint = 4;
-  else if (gwangCards.length === 3) gwangPoint = rainCount > 0 ? 2 : 3;
-
-  const ribbonMonths = new Set(ribbonCards.map((c) => c.month));
-  const animalMonths = new Set(animalCards.map((c) => c.month));
+  if (gwangCount >= 5) gwangPoint = 15;
+  else if (gwangCount === 4) gwangPoint = 4;
+  else if (gwangCount === 3) gwangPoint = rainCount > 0 ? 2 : 3;
 
   const hasHongdan = HONGDAN_MONTHS.every((m) => ribbonMonths.has(m));
   const hasCheongdan = CHEONGDAN_MONTHS.every((m) => ribbonMonths.has(m));
@@ -881,7 +924,7 @@ function scoreDetailWithOption(cards, nineAnimalAsJunk = false) {
   const junkPoint = junk >= 10 ? junk - 9 : 0;
 
   return {
-    gwang: gwangCards.length,
+    gwang: gwangCount,
     pureGwang,
     animals,
     ribbons,
@@ -1553,10 +1596,40 @@ function getSpeechProfile(text) {
   return { rate: 1.0, pitch: 1.0, volume: 1 };
 }
 
+<<<<<<< security-fix-randomness-11676875723095870459
 function getSecureRandom() {
   const array = new Uint32Array(1);
   (window.crypto || window.msCrypto).getRandomValues(array);
   return array[0] / 4294967296;
+=======
+/**
+ * Returns a cryptographically secure random float in [0, 1).
+ */
+function getSecureRandom() {
+  const array = new Uint32Array(1);
+  if (typeof window !== 'undefined' && (window.crypto || window.msCrypto)) {
+    (window.crypto || window.msCrypto).getRandomValues(array);
+  } else if (typeof crypto !== 'undefined' && crypto.getRandomValues) {
+    crypto.getRandomValues(array);
+  } else if (typeof require !== 'undefined') {
+    try {
+      const nodeCrypto = require('crypto');
+      const cryptoObj = nodeCrypto.webcrypto || nodeCrypto;
+      if (cryptoObj && cryptoObj.getRandomValues) {
+        cryptoObj.getRandomValues(array);
+      } else if (nodeCrypto.randomFillSync) {
+        nodeCrypto.randomFillSync(array);
+      } else {
+        throw new Error();
+      }
+    } catch (e) {
+      throw new Error("No secure random number generator available.");
+    }
+  } else {
+    throw new Error("No secure random number generator available.");
+  }
+  return array[0] / (0xffffffff + 1);
+>>>>>>> main
 }
 
 function shuffle(arr) {
@@ -1569,3 +1642,36 @@ function shuffle(arr) {
 }
 
 startGame();
+
+function checkChongTong() {
+  for (const p of game.players) {
+    const counts = {};
+    for (const c of p.hand) {
+      counts[c.month] = (counts[c.month] || 0) + 1;
+    }
+    for (const m in counts) {
+      if (counts[m] === 4) {
+        return { winner: p, month: m };
+      }
+    }
+  }
+  return null;
+}
+
+function endGameWithChongTong(res) {
+  const winner = res.winner;
+  const baseScore = 10;
+  const mult = game.currentMultiplier || 1;
+  const finalScore = baseScore * mult;
+
+  // 총통은 기본 10점에 배수만 적용 (고/스톱 없음)
+  winner.score = baseScore;
+  winner.stopScore = finalScore;
+
+  // 상대방 점수 0 처리
+  const loser = game.players.find(p => p.id !== winner.id);
+  loser.score = 0;
+  loser.stopScore = 0;
+
+  endGame(winner, `총통 (${res.month}월 4장) 승리`, finalScore);
+}
