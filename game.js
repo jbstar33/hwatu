@@ -749,26 +749,19 @@ function updatePlayerScore(player, opponent = null) {
 }
 
 function autoChooseNineAnimalForAI(player, opponent = null) {
-  const hasNineAnimal = player.captured.some((c) => c.type === "animal" && c.month === 9);
-  if (!hasNineAnimal) return;
+  const comparison = getNineAnimalComparison(player, opponent);
+  if (!comparison) return;
 
-  const asAnimalDetail = scoreDetailWithOption(player.captured, false);
-  const asJunkDetail = scoreDetailWithOption(player.captured, true);
-
-  const asAnimalSettlement = calculateStopSettlement(player, asAnimalDetail, opponent).stopScore;
-  const asJunkSettlement = calculateStopSettlement(player, asJunkDetail, opponent).stopScore;
+  const { asAnimalSettlement, asJunkSettlement } = comparison;
 
   if (asJunkSettlement > asAnimalSettlement) {
     player.nineAnimalAsJunk = true;
-    return;
-  }
-  if (asAnimalSettlement > asJunkSettlement) {
+  } else if (asAnimalSettlement > asJunkSettlement) {
     player.nineAnimalAsJunk = false;
-    return;
+  } else {
+    // 동점이면 일반적으로 피(쌍피)로 운용
+    player.nineAnimalAsJunk = true;
   }
-
-  // 동점이면 일반적으로 피(쌍피)로 운용
-  player.nineAnimalAsJunk = true;
 }
 
 function calculateStopSettlement(player, detail, opponent = null) {
@@ -830,6 +823,24 @@ function getOpponentDetailForPigbak(opponent) {
 function getGoMultiplier(goCount) {
   if (goCount < 3) return 1;
   return 2 ** (goCount - 2);
+}
+
+function getNineAnimalComparison(player, opponent = null) {
+  const hasNineAnimal = player.captured.some((c) => c.type === "animal" && c.month === 9);
+  if (!hasNineAnimal) return null;
+
+  const asAnimalDetail = scoreDetailWithOption(player.captured, false);
+  const asJunkDetail = scoreDetailWithOption(player.captured, true);
+
+  const asAnimalSettlement = calculateStopSettlement(player, asAnimalDetail, opponent).stopScore;
+  const asJunkSettlement = calculateStopSettlement(player, asJunkDetail, opponent).stopScore;
+
+  return {
+    asAnimalDetail,
+    asJunkDetail,
+    asAnimalSettlement,
+    asJunkSettlement
+  };
 }
 
 function scoreDetail(cards) {
@@ -1347,22 +1358,11 @@ function formatScoreLine(player) {
 }
 
 function maybeAskNineAnimalChoice(player, opponent) {
-  const hasNineAnimal = player.captured.some((c) => c.type === "animal" && c.month === 9);
-  if (!hasNineAnimal) return;
   if (game.awaitingGoStop) return;
+  const comparison = getNineAnimalComparison(player, opponent);
+  if (!comparison) return;
 
-  const asAnimalDetail = scoreDetailWithOption(player.captured, false);
-  const asJunkDetail = scoreDetailWithOption(player.captured, true);
-  const asAnimalSettlement = calculateStopSettlement(
-    { ...player, goCount: player.goCount, shakeMultiplier: player.shakeMultiplier },
-    asAnimalDetail,
-    opponent
-  ).stopScore;
-  const asJunkSettlement = calculateStopSettlement(
-    { ...player, goCount: player.goCount, shakeMultiplier: player.shakeMultiplier },
-    asJunkDetail,
-    opponent
-  ).stopScore;
+  const { asAnimalSettlement, asJunkSettlement, asJunkDetail } = comparison;
 
   const canStopWithJunk = asJunkDetail.base >= WIN_THRESHOLD;
   if (!canStopWithJunk) return;
