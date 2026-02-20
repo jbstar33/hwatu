@@ -714,6 +714,7 @@ function hideResultOverlay() {
 function spawnConfetti(count = 36) {
   if (!el.resultConfetti) return;
   el.resultConfetti.innerHTML = "";
+  const fragment = document.createDocumentFragment();
   const colors = ["#ffd867", "#ff7f7f", "#8fe6a2", "#79beff", "#f7c0ff", "#fff0a8"];
   for (let i = 0; i < count; i += 1) {
     const piece = document.createElement("span");
@@ -723,8 +724,9 @@ function spawnConfetti(count = 36) {
     piece.style.animationDelay = `${Math.random() * 420}ms`;
     piece.style.animationDuration = `${1300 + Math.floor(Math.random() * 900)}ms`;
     piece.style.transform = `rotate(${Math.floor(Math.random() * 360)}deg)`;
-    el.resultConfetti.appendChild(piece);
+    fragment.appendChild(piece);
   }
+  el.resultConfetti.appendChild(fragment);
   setTimeout(() => {
     if (el.resultConfetti) el.resultConfetti.innerHTML = "";
   }, 2600);
