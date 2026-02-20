@@ -472,6 +472,12 @@ async function onHumanCardClick(cardId, sourceNode) {
 
   const deckOutcome = await resolveDeckDraw(me);
   markPpukIfNeeded(me, card, handResult, deckOutcome);
+
+  if (game.pendingChoice) {
+    render();
+    return;
+  }
+
   finalizeBonusAfterTurn(me, game.players[1]);
   afterTurnScoring(me, game.players[1]);
 
@@ -511,6 +517,12 @@ async function onTableCardChoice(tableCardId) {
   if (!pending.fromDeck) {
     const deckOutcome = await resolveDeckDraw(player);
     markPpukIfNeeded(player, pending.card, { laidToTable: false }, deckOutcome);
+
+    if (game.pendingChoice) {
+      render();
+      return;
+    }
+
     finalizeBonusAfterTurn(player, opponent);
     afterTurnScoring(player, opponent);
     if (!game.awaitingGoStop && !game.gameOver) nextTurn();
