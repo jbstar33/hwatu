@@ -37,8 +37,8 @@ const ANIM = {
   deckToMidMs: 320,
   deckFlipMs: 260,
   deckToTableMs: 360,
-  reminderMs: 8000,
-  timeoutAfterReminderMs: 5000
+  reminderMs: 15000,
+  timeoutAfterReminderMs: 10000
 };
 
 const AI_SCORE_MATCH_MULTIPLIER = 3;

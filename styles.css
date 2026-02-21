@@ -592,8 +592,8 @@ button.toggle-btn.active {
 
 @media (max-width: 600px) {
   :root {
-    --card-w: 46px;
-    --card-h: 69px;
+    --card-w: 54px;
+    --card-h: 81px;
     --card-gap: 4px;
   }
 
@@ -655,8 +655,8 @@ button.toggle-btn.active {
   }
 
   .captured-cards .card {
-    width: 28px;
-    height: 42px;
+    width: 34px;
+    height: 51px;
   }
 
   .log-section { display: none; }
