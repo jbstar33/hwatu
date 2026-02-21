@@ -102,6 +102,7 @@ const el = typeof document !== 'undefined' ? {
   resultTitle: document.getElementById("resultTitle"),
   resultWinner: document.getElementById("resultWinner"),
   resultFinalScore: document.getElementById("resultFinalScore"),
+  restartBtn: document.getElementById("restartBtn"),
   goStopTitle: document.getElementById("goStopTitle"),
   goStopScore: document.getElementById("goStopScore"),
   goStopDetail: document.getElementById("goStopDetail"),
@@ -143,6 +144,7 @@ if (typeof document !== 'undefined') {
   el.stopDecisionBtn?.addEventListener("click", () => handleGoStop(false));
   el.nagariYesBtn?.addEventListener("click", () => handleNagariDecision(true));
   el.nagariNoBtn?.addEventListener("click", () => handleNagariDecision(false));
+  el.restartBtn?.addEventListener("click", () => startGame());
 
   if (window.speechSynthesis) {
     window.speechSynthesis.addEventListener("voiceschanged", () => {
@@ -828,6 +830,7 @@ function showResultOverlay(winner, finalScore) {
   } else {
     soundManager.playLose();
   }
+  el.restartBtn?.focus();
 }
 
 function hideResultOverlay() {
