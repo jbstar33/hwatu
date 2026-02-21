@@ -445,18 +445,25 @@ button.toggle-btn.active {
   border-radius: 3px;
 }
 
+.captured-row-top {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px; /* Gap between groups */
+  padding-bottom: 4px;
+  border-bottom: 1px solid rgba(255,255,255,0.1);
+  margin-bottom: 4px;
+}
+
+.captured-row-bottom {
+  display: flex;
+  flex-wrap: wrap;
+}
+
 .captured-group {
   display: flex;
   flex-wrap: wrap;
   gap: 0;
-  padding-bottom: 8px;
-  margin-bottom: 4px;
-  border-bottom: 1px solid rgba(255,255,255,0.1);
   padding-left: 4px; /* Space for the first card's shadow/margin */
-}
-.captured-group:last-child {
-  border-bottom: none;
-  margin-bottom: 0;
 }
 
 .captured-cards .card {
@@ -488,7 +495,8 @@ button.toggle-btn.active {
 /* Logs */
 .log-section {
   flex: 1;
-  min-height: 0;
+  min-height: 100px;
+  max-height: 250px;
   display: flex;
   flex-direction: column;
 }
@@ -502,6 +510,8 @@ button.toggle-btn.active {
   font-size: 0.8rem;
   font-family: monospace;
   color: #ccc;
+  border: 1px solid rgba(255,255,255,0.05); /* Visual hint for scroll area */
+  border-radius: 4px;
 }
 #logList li {
   margin-bottom: 3px;

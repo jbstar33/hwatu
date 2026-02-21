@@ -1260,10 +1260,20 @@ function renderCaptured(cardsContainer, player) {
   const ribbonDiv = createGroupDiv(groups.ribbon, "group-ribbon");
   const junkDiv = createGroupDiv(groups.junk, "group-junk");
 
-  if (gwangDiv) cardsContainer.appendChild(gwangDiv);
-  if (animalDiv) cardsContainer.appendChild(animalDiv);
-  if (ribbonDiv) cardsContainer.appendChild(ribbonDiv);
-  if (junkDiv) cardsContainer.appendChild(junkDiv);
+  // Top row container for Gwang, Animal, Ribbon
+  const topRow = document.createElement("div");
+  topRow.className = "captured-row-top";
+  if (gwangDiv) topRow.appendChild(gwangDiv);
+  if (animalDiv) topRow.appendChild(animalDiv);
+  if (ribbonDiv) topRow.appendChild(ribbonDiv);
+
+  // Bottom row container for Junk
+  const bottomRow = document.createElement("div");
+  bottomRow.className = "captured-row-bottom";
+  if (junkDiv) bottomRow.appendChild(junkDiv);
+
+  if (topRow.hasChildNodes()) cardsContainer.appendChild(topRow);
+  if (bottomRow.hasChildNodes()) cardsContainer.appendChild(bottomRow);
 }
 
 function renderLastPlay(container, card) {
