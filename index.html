@@ -33,7 +33,7 @@
             <div class="deck-box">
               <h3>더미</h3>
               <div id="deckCount" class="deck-count"></div>
-              <h3 class="mini-title">뻑 더미</h3>
+              <!-- Removed Title: 뻑 더미 -->
               <div id="ppukPiles" class="ppuk-piles"></div>
             </div>
             <div class="table-zone">
@@ -80,52 +80,52 @@
         </section>
 
         <aside class="side-panel">
-          <section class="status-panel">
+          <section class="status-panel" style="display:none;">
             <p id="statusText" aria-live="polite" role="status">게임 준비 중...</p>
             <p id="turnText" aria-live="polite"></p>
           </section>
 
           <section class="capture-box player-info-box mobile-only">
-            <h3>AI 먹는 패</h3>
+            <!-- Removed Title: AI 먹는 패 -->
             <div id="mobileAiCapturedCards" class="captured-cards"></div>
           </section>
 
           <section class="capture-box player-info-box mobile-only">
-            <h3>내가 먹는 패</h3>
+            <!-- Removed Title: 내가 먹는 패 -->
             <div id="mobileHumanCapturedCards" class="captured-cards"></div>
           </section>
 
           <section class="capture-box player-info-box mobile-only">
-            <h3>AI 점수</h3>
-            <p id="mobileAiHandCount"></p>
-            <p id="mobileAiScore"></p>
+            <!-- Removed Title: AI 점수 -->
+            <p id="mobileAiHandCount" style="display:none;"></p>
+            <p id="mobileAiScore" class="score-detail-text"></p>
             <p id="mobileAiGo"></p>
           </section>
 
           <section class="capture-box player-info-box mobile-only">
-            <h3>내 점수</h3>
-            <p id="mobileHumanScore"></p>
+            <!-- Removed Title: 내 점수 -->
+            <p id="mobileHumanScore" class="score-detail-text"></p>
             <p id="mobileHumanGo"></p>
           </section>
 
           <section class="capture-box player-info-box desktop-only">
-            <h3>AI 정보</h3>
-            <p id="aiHandCount"></p>
-            <p id="aiScore"></p>
+            <!-- Removed Title: AI 정보 -->
+            <p id="aiHandCount" style="display:none;"></p>
+            <p id="aiScore" class="score-detail-text"></p>
             <p id="aiGo"></p>
-            <p class="mini-title recent-title">최근 낸 패</p>
-            <div id="aiLastPlay" class="last-play recent-play"></div>
-            <p class="mini-title">먹은 패</p>
+            <p class="mini-title recent-title" style="display:none;">최근 낸 패</p>
+            <div id="aiLastPlay" class="last-play recent-play" style="display:none;"></div>
+            <!-- Removed Title: 먹은 패 -->
             <div id="aiCapturedCards" class="captured-cards"></div>
           </section>
 
           <section class="capture-box player-info-box desktop-only">
-            <h3>내 정보</h3>
-            <p id="humanScore"></p>
+            <!-- Removed Title: 내 정보 -->
+            <p id="humanScore" class="score-detail-text"></p>
             <p id="humanGo"></p>
-            <p class="mini-title recent-title">최근 낸 패</p>
-            <div id="humanLastPlay" class="last-play recent-play"></div>
-            <p class="mini-title">먹은 패</p>
+            <p class="mini-title recent-title" style="display:none;">최근 낸 패</p>
+            <div id="humanLastPlay" class="last-play recent-play" style="display:none;"></div>
+            <!-- Removed Title: 먹은 패 -->
             <div id="humanCapturedCards" class="captured-cards"></div>
           </section>
 
