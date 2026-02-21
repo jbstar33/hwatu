@@ -1224,29 +1224,46 @@ function renderTable() {
 }
 
 function renderCaptured(cardsContainer, player) {
-  const typeRank = (c) => {
-    if (c.type === "gwang") return 0;
-    if (c.type === "animal") return 1;
-    if (c.type === "ribbon") return 2;
-    if (c.type === "junk" || c.type === "bonus") return 3;
-    return 4;
-  };
   cardsContainer.innerHTML = "";
-  const fragment = document.createDocumentFragment();
-  player.captured
-    .slice()
-    .sort((a, b) => {
-      const typeDiff = typeRank(a) - typeRank(b);
-      if (typeDiff !== 0) return typeDiff;
-      if (a.type === "ribbon" && b.type === "ribbon") {
-        return (RIBBON_KIND_ORDER[a.ribbonKind || "plain"] ?? 2) - (RIBBON_KIND_ORDER[b.ribbonKind || "plain"] ?? 2);
-      }
-      return a.month - b.month;
-    })
-    .forEach((card) => {
-      fragment.appendChild(buildCardNode(card));
-    });
-  cardsContainer.appendChild(fragment);
+
+  const groups = {
+    gwang: [],
+    animal: [],
+    ribbon: [],
+    junk: []
+  };
+
+  const sortFn = (a, b) => {
+    if (a.type === "ribbon" && b.type === "ribbon") {
+      return (RIBBON_KIND_ORDER[a.ribbonKind || "plain"] ?? 2) - (RIBBON_KIND_ORDER[b.ribbonKind || "plain"] ?? 2);
+    }
+    return a.month - b.month;
+  };
+
+  player.captured.forEach((card) => {
+    if (card.type === "gwang") groups.gwang.push(card);
+    else if (card.type === "animal") groups.animal.push(card);
+    else if (card.type === "ribbon") groups.ribbon.push(card);
+    else groups.junk.push(card);
+  });
+
+  const createGroupDiv = (cards, className) => {
+    if (cards.length === 0) return null;
+    const div = document.createElement("div");
+    div.className = "captured-group " + className;
+    cards.sort(sortFn).forEach((c) => div.appendChild(buildCardNode(c)));
+    return div;
+  };
+
+  const gwangDiv = createGroupDiv(groups.gwang, "group-gwang");
+  const animalDiv = createGroupDiv(groups.animal, "group-animal");
+  const ribbonDiv = createGroupDiv(groups.ribbon, "group-ribbon");
+  const junkDiv = createGroupDiv(groups.junk, "group-junk");
+
+  if (gwangDiv) cardsContainer.appendChild(gwangDiv);
+  if (animalDiv) cardsContainer.appendChild(animalDiv);
+  if (ribbonDiv) cardsContainer.appendChild(ribbonDiv);
+  if (junkDiv) cardsContainer.appendChild(junkDiv);
 }
 
 function renderLastPlay(container, card) {
